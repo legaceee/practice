@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { client } from "@repo/db/client";
 const app = express();
 app.use(express.json());
+const port = process.env.PORT2 || 3004;
 
 app.post("/hooks/:workflowId", async (req, res) => {
   try {
@@ -31,3 +32,5 @@ app.post("/hooks/:workflowId", async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
+
+app.listen(port);
