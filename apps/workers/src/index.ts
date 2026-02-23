@@ -1,9 +1,9 @@
-import { client } from "@repo/db/client";
+import { prisma } from "@repo/db/client";
 async function processExecutions() {
   console.log("worker started...");
   while (true) {
     try {
-      const execution = await client.execution.findFirst({
+      const execution = await prisma.execution.findFirst({
         where: { status: "executing" },
         include: {
           workflow: {
@@ -32,7 +32,7 @@ async function runWorkflow(execution: any) {
       await executeNode(node, execution.triggerData);
     }
 
-    await client.execution.update({
+    await prisma.execution.update({
       where: { id: execution.id },
       data: {
         status: "completed",
@@ -44,7 +44,7 @@ async function runWorkflow(execution: any) {
   } catch (error) {
     console.error("Execution failed:", error);
 
-    await client.execution.update({
+    await prisma.execution.update({
       where: { id: execution.id },
       data: {
         status: "failed",

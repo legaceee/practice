@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { client } from "@repo/db/client";
+import { prisma } from "@repo/db/client";
 const app = express();
 app.use(express.json());
 const port = process.env.PORT2 || 3004;
@@ -9,7 +9,7 @@ app.post("/hooks/:workflowId", async (req, res) => {
     const workflowId = parseInt(req.params.workflowId);
     const payload = req.body;
 
-    const workflow = await client.workflow.findUnique({
+    const workflow = await prisma.workflow.findUnique({
       where: { id: workflowId },
       include: { nodes: true },
     });
@@ -18,7 +18,7 @@ app.post("/hooks/:workflowId", async (req, res) => {
       return res.status(404).json({ message: "Workflow not active" });
     }
 
-    await client.execution.create({
+    await prisma.execution.create({
       data: {
         workflowId: workflow.id,
         status: "executing",
