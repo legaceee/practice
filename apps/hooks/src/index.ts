@@ -1,8 +1,9 @@
 import express, { Request, Response } from "express";
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
+// import {prisma} from "../packages/db/src/index.ts"
 const app = express();
 app.use(express.json());
-const port = process.env.PORT2 || 3004;
+const port = process.env.PORT2 || 3000;
 
 app.post("/hooks/:workflowId", async (req, res) => {
   try {

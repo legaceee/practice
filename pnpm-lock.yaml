@@ -154,13 +154,16 @@ importers:
       '@prisma/client':
         specifier: ^7.4.1
         version: 7.4.1(prisma@7.4.1(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.2))(typescript@5.9.2)
+      '@prisma/client-runtime-utils':
+        specifier: ^7.4.1
+        version: 7.4.1
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+    devDependencies:
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
-    devDependencies:
       prisma:
         specifier: ^7.4.1
         version: 7.4.1(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.2)

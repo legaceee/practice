@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 const port = process.env.PORT || 3001;
 const app = express();
 app.use(
@@ -11,7 +12,8 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
+  // const data = await prisma.user.findFirst();
   res.send("Hello world");
 });
 app.listen(port, () => {
