@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { prisma } from "@repo/db";
 async function processExecutions() {
   console.log("worker started...");
@@ -19,6 +20,7 @@ async function processExecutions() {
       await runWorkflow(execution);
     } catch (error) {
       console.log("worker error", error);
+      await new Promise((res) => setTimeout(res, 5000));
     }
   }
 }
