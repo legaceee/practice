@@ -1,4 +1,4 @@
-import { prisma } from "@repo/db/client";
+import { prisma } from "@repo/db";
 async function processExecutions() {
   console.log("worker started...");
   while (true) {
