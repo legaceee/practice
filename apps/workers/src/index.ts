@@ -56,6 +56,7 @@ async function runWorkflow(execution: any) {
   }
 }
 async function executeNode(node: any, triggerData: any) {
+  console.log("Executing node:", node.service, node.config);
   switch (node.service) {
     case "console":
       console.log("console action:", triggerData);
