@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { prisma } from "@repo/db";
+import { sendEmail } from "./services/sendEmail.js";
 async function processExecutions() {
   console.log("worker started...");
   while (true) {
@@ -67,6 +68,9 @@ async function executeNode(node: any, triggerData: any) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(triggerData),
       });
+      break;
+    case "mail":
+      await sendEmail(node.config, triggerData);
       break;
 
     default:
