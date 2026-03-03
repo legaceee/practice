@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { prisma } from "@repo/db";
 import { sendEmail } from "./services/sendEmail.js";
+import { retry } from "./retry.js";
 async function processExecutions() {
   console.log("worker started...");
   while (true) {
@@ -32,7 +33,7 @@ async function runWorkflow(execution: any) {
       .sort((a: any, b: any) => a.order - b.order);
 
     for (const node of actionNodes) {
-      await executeNode(node, execution.triggerData);
+      await retry(() => executeNode(node, execution.triggerData), 3, 2000);
     }
 
     await prisma.execution.update({
