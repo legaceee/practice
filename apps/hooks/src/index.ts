@@ -4,6 +4,7 @@ import { prisma } from "@repo/db";
 const app = express();
 app.use(express.json());
 const port = process.env.PORT2 || 3000;
+console.log(process.env.DATABASE_URL, "this was the set value");
 
 app.post("/hooks/:workflowId", async (req, res) => {
   try {

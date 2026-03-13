@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,40 +6,77 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 model User {
-  id Int @id @default(autoincrement())
-  email String @unique
-  password String
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  password  String
   workflows Workflow[]
 }
 
 model Workflow {
-  id Int @id @default(autoincrement())
-  name String
-  userId Int
-  user User @relation(fields: [userId], references: [id])
-  nodes Node[]
-  executions Execution[]
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
+  id          Int           @id @default(autoincrement())
+  name        String
+  userId      Int
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  executions  Execution[]
+  nodes       Node[]
+  user        User          @relation(fields: [userId], references: [id])
+  workflowRun WorkflowRun[]
 }
 
 model Node {
-  id Int @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   workflowId Int
-  workflow Workflow @relation(fields: [workflowId], references: [id])
-  type String // trigger | action
-  service String
-  config Json
-  order Int
+  type       String
+  service    String
+  config     Json
+  order      Int
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
 }
 
 model Execution {
-  id Int @id @default(autoincrement())
-  workflowId Int
-  workflow Workflow @relation(fields: [workflowId], references: [id])
-  status String
-  startedAt DateTime @default(now())
+  id          Int       @id @default(autoincrement())
+  workflowId  Int
+  status      String
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
   triggerData Json
-  endedAt DateTime?
+  workflow    Workflow  @relation(fields: [workflowId], references: [id])
+}
+
+model WorkflowRun {
+  id           String           @id @default(uuid())
+  workflowId   Int
+  status       String
+  startedAt    DateTime         @default(now())
+  finishedAt   DateTime?
+  action       ActionExecution?
+  executionlog ExecutionLog[]
+  workflow     Workflow         @relation(fields: [workflowId], references: [id])
+}
+
+model ExecutionLog {
+  id            String      @id @default(uuid())
+  workflowRunId String
+  step          String
+  status        String
+  message       String?
+  createdAt     DateTime    @default(now())
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
+}
+
+model ActionExecution {
+  id            String      @id @default(uuid())
+  workflowRunId String      @unique
+  actionId      String
+  status        String
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
+}
+
+model playing_with_neon {
+  id    Int    @id @default(autoincrement())
+  name  String
+  value Float? @db.Real
 }
