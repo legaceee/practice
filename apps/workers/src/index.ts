@@ -26,6 +26,7 @@ async function processExecutions() {
     }
   }
 }
+async function executeWorkflow(workflowRunId: any) {}
 async function runWorkflow(execution: any) {
   try {
     const actionNodes = execution.workflow.nodes
@@ -33,7 +34,7 @@ async function runWorkflow(execution: any) {
       .sort((a: any, b: any) => a.order - b.order);
 
     for (const node of actionNodes) {
-      await retry(() => executeNode(node, execution.triggerData), 3, 2000);
+      await retry(() => executeNode(node, execution), 3, 2000);
     }
 
     await prisma.execution.update({
@@ -57,25 +58,45 @@ async function runWorkflow(execution: any) {
     });
   }
 }
-async function executeNode(node: any, triggerData: any) {
+async function executeNode(node: any, execution: any) {
   console.log("Executing node:", node.service, node.config);
-  switch (node.service) {
-    case "console":
-      console.log("console action:", triggerData);
-      break;
-    case "webhook":
-      await fetch(node.config.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(triggerData),
-      });
-      break;
-    case "mail":
-      await sendEmail(node.config, triggerData);
-      break;
+  const log = await prisma.executionLog.create({
+    data: {
+      workflowRunId: execution.id,
+      step: node.service,
+      status: "running",
+    },
+  });
+  try {
+    switch (node.service) {
+      case "console":
+        console.log("console action:", execution.triggerData);
+        break;
+      case "webhook":
+        const data = await fetch(node.config.url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(execution.triggerData),
+        });
+        console.log("this is the webhook fetch", data);
+        break;
+      case "mail":
+        await sendEmail(node.config, execution.triggerData);
+        break;
 
-    default:
-      console.log("unknown service :", node.service);
+      default:
+        console.log("unknown service :", node.service);
+    }
+    await prisma.executionLog.update({
+      where: { id: log.id },
+      data: { status: "success" },
+    });
+  } catch (error: any) {
+    await prisma.executionLog.update({
+      where: { id: log.id },
+      data: { status: "failed", message: error.message },
+    });
+    throw Error;
   }
 }
 processExecutions();
