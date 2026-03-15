@@ -6,19 +6,26 @@ async function processExecutions() {
   console.log("worker started...");
   while (true) {
     try {
-      const execution = await prisma.execution.findFirst({
-        where: { status: "executing" },
-        include: {
-          workflow: {
-            include: { nodes: true },
+      const execution = await prisma.$transaction(async (tx) => {
+        const job = await tx.execution.findFirst({
+          where: { status: "pending" },
+          orderBy: { startedAt: "asc" },
+          include: {
+            workflow: { include: { nodes: true } },
           },
-        },
+        });
+        if (!job) return null;
+        return tx.execution.update({
+          where: { id: job.id },
+          data: { status: "executing" },
+        });
       });
+
       if (!execution) {
         await new Promise((res) => setTimeout(res, 2000));
         continue;
       }
-      console.log("process execution", execution.id);
+      console.log("processing", execution.id);
       await runWorkflow(execution);
     } catch (error) {
       console.log("worker error", error);
@@ -26,7 +33,7 @@ async function processExecutions() {
     }
   }
 }
-async function executeWorkflow(workflowRunId: any) {}
+
 async function runWorkflow(execution: any) {
   try {
     const actionNodes = execution.workflow.nodes
