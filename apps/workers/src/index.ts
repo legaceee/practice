@@ -2,47 +2,90 @@ import "dotenv/config";
 import { prisma } from "@repo/db";
 import { sendEmail } from "./services/sendEmail.js";
 import { retry } from "./retry.js";
+
+const POLL_INTERVAL_MS = 2000;
+const ERROR_RETRY_MS = 5000;
+
 async function processExecutions() {
   console.log("worker started...");
+
   while (true) {
     try {
-      const execution = await prisma.$transaction(async (tx) => {
-        const job = await tx.execution.findFirst({
-          where: { status: "pending" },
-          orderBy: { startedAt: "asc" },
-          include: {
-            workflow: { include: { nodes: true } },
-          },
-        });
-        if (!job) return null;
-        return tx.execution.update({
-          where: { id: job.id },
-          data: { status: "executing" },
-        });
+      const nextExecution = await prisma.execution.findFirst({
+        where: { status: { in: ["pending", "executing"] } },
+        orderBy: { startedAt: "asc" },
       });
 
-      if (!execution) {
-        await new Promise((res) => setTimeout(res, 2000));
+      if (!nextExecution) {
+        await new Promise((res) => setTimeout(res, POLL_INTERVAL_MS));
         continue;
       }
-      console.log("processing", execution.id);
-      await runWorkflow(execution);
+
+      const claimedExecution = await prisma.execution.updateMany({
+        where: {
+          id: nextExecution.id,
+          status: { in: ["pending", "executing"] },
+        },
+        data: {
+          status: "executing",
+          startedAt: new Date(),
+          endedAt: null,
+        },
+      });
+
+      if (claimedExecution.count === 0) continue;
+
+      const executionWithWorkflow = await prisma.execution.findUnique({
+        where: { id: nextExecution.id },
+        include: {
+          workflow: {
+            include: { nodes: true },
+          },
+        },
+      });
+
+      if (!executionWithWorkflow) continue;
+
+      await runWorkflow(executionWithWorkflow);
     } catch (error) {
       console.log("worker error", error);
-      await new Promise((res) => setTimeout(res, 5000));
+      await new Promise((res) => setTimeout(res, ERROR_RETRY_MS));
     }
   }
 }
 
 async function runWorkflow(execution: any) {
+  let workflowRunId: string | undefined;
+
   try {
+    const workflowRun = await prisma.workflowRun.create({
+      data: {
+        workflowId: execution.workflowId,
+        status: "executing",
+      },
+    });
+
+    workflowRunId = workflowRun.id;
+
     const actionNodes = execution.workflow.nodes
       .filter((n: any) => n.type === "action")
       .sort((a: any, b: any) => a.order - b.order);
 
     for (const node of actionNodes) {
-      await retry(() => executeNode(node, execution), 3, 2000);
+      await retry(
+        () => executeNode(node, execution, workflowRunId as string),
+        3,
+        2000,
+      );
     }
+
+    await prisma.workflowRun.update({
+      where: { id: workflowRunId },
+      data: {
+        status: "completed",
+        finishedAt: new Date(),
+      },
+    });
 
     await prisma.execution.update({
       where: { id: execution.id },
@@ -56,6 +99,18 @@ async function runWorkflow(execution: any) {
   } catch (error) {
     console.error("Execution failed:", error);
 
+    if (workflowRunId) {
+      await prisma.workflowRun
+        .update({
+          where: { id: workflowRunId },
+          data: {
+            status: "failed",
+            finishedAt: new Date(),
+          },
+        })
+        .catch(() => null);
+    }
+
     await prisma.execution.update({
       where: { id: execution.id },
       data: {
@@ -65,15 +120,18 @@ async function runWorkflow(execution: any) {
     });
   }
 }
-async function executeNode(node: any, execution: any) {
+
+async function executeNode(node: any, execution: any, workflowRunId: string) {
   console.log("Executing node:", node.service, node.config);
+
   const log = await prisma.executionLog.create({
     data: {
-      workflowRunId: execution.id,
+      workflowRunId,
       step: node.service,
       status: "running",
     },
   });
+
   try {
     switch (node.service) {
       case "console":
@@ -103,7 +161,7 @@ async function executeNode(node: any, execution: any) {
       where: { id: log.id },
       data: { status: "failed", message: error.message },
     });
-    throw Error;
+    throw error;
   }
 }
 processExecutions();

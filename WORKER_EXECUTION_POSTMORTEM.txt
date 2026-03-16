@@ -1,0 +1,235 @@
+WORKER EXECUTION POSTMORTEM (What went wrong, what was fixed, and how to learn from it)
+Date: 2026-03-16
+Project: project_automation
+
+====================================================================
+1) WHAT YOU WERE TRYING TO DO
+====================================================================
+You built a workflow system where:
+- hooks service receives an event
+- inserts an execution row in DB
+- workers service picks executions and runs workflow nodes
+- execution logs are written per node
+- execution status should end as completed or failed
+
+The symptom you reported was correct:
+- worker not behaving correctly
+- nodes staying in running/executing in DB
+
+====================================================================
+2) ROOT PROBLEMS IN YOUR CODE (AND THE ERRORS THEY CAUSED)
+====================================================================
+
+Problem A: Wrong initial status from hooks
+-----------------------------------------
+In hooks, new executions were created with status = "executing".
+But worker logic was searching for status = "pending".
+
+Effect:
+- New jobs were not consistently claimable by worker as intended
+- Queue state machine became inconsistent
+- Rows could remain in executing without proper lifecycle
+
+Why this is a bug:
+A queue generally needs clear transitions like:
+pending -> executing -> completed/failed
+
+If producer directly inserts "executing", worker claim logic and recovery logic break.
+
+
+Problem B: Worker claim logic used Prisma interactive transaction in tight loop
+-------------------------------------------------------------------------------
+Worker used prisma.$transaction(async (tx) => { findFirst + update ... })
+inside while(true) polling.
+
+Observed runtime error:
+- PrismaClientKnownRequestError (P2028)
+- "Transaction API error: Unable to start a transaction in the given time"
+
+Why this happened:
+- Interactive transactions can fail under connection pressure/contention
+- Running this repeatedly in an infinite poll loop increases risk
+- If DB pool is busy, transaction start can timeout
+
+
+Problem C: executionLog.workflowRunId mismatch with schema design
+-----------------------------------------------------------------
+Schema design:
+- Execution.id is Int
+- WorkflowRun.id is String (UUID)
+- ExecutionLog.workflowRunId references WorkflowRun.id (String)
+
+But worker code wrote:
+- workflowRunId: execution.id
+
+Effect:
+- Wrong relation target/type usage
+- Logs not correctly tied to a valid workflow run
+- Node log lifecycle could become inconsistent or fail
+
+This was a data-model mismatch (very important class of bug).
+
+====================================================================
+3) EXACT FIXES APPLIED
+====================================================================
+
+Fix 1: Hooks now enqueue correctly
+----------------------------------
+Changed hooks insertion status from:
+- "executing" -> "pending"
+
+This restores producer/consumer flow:
+- hooks only enqueue
+- worker claims and executes
+
+
+Fix 2: Worker claim logic changed to safer compare-and-set style
+----------------------------------------------------------------
+Removed interactive transaction claim block.
+Now worker:
+1) finds next execution with status in ["pending", "executing"]
+2) claims it using updateMany with status condition
+3) proceeds only if update count > 0
+
+Why this is better:
+- avoids interactive transaction timeout path
+- safer for concurrent workers
+- can recover old stuck "executing" rows
+
+
+Fix 3: Proper WorkflowRun lifecycle added
+-----------------------------------------
+Before node execution, worker now creates a WorkflowRun row.
+Then:
+- node logs use correct workflowRunId (UUID)
+- WorkflowRun status updated to completed/failed with finishedAt
+- Execution status updated to completed/failed with endedAt
+
+This aligns runtime writes with your schema relations.
+
+
+Fix 4: Minor resilience cleanup
+-------------------------------
+- Added poll/retry interval constants
+- Added null checks before running workflow
+- Preserved retry around node execution
+
+====================================================================
+4) HOW TO THINK ABOUT THIS SYSTEM (MENTAL MODEL)
+====================================================================
+Treat it as a state machine + ownership model:
+
+Producer (hooks):
+- only creates work as pending
+
+Consumer (worker):
+- atomically claims pending -> executing
+- performs work
+- always finalizes into completed or failed
+
+Observability rows (workflowRun, executionLog):
+- must reference correct IDs and relations
+- should be created/updated in deterministic order
+
+If any stage skips ownership boundaries, rows get stuck.
+
+====================================================================
+5) HOW YOU CAN AVOID THIS NEXT TIME (LEARNING PLAN)
+====================================================================
+
+A) Define statuses as strict enums, not free strings
+----------------------------------------------------
+Use a single source of truth for statuses.
+Example categories:
+- ExecutionStatus: pending | executing | completed | failed
+- LogStatus: running | success | failed
+
+Benefits:
+- impossible/invalid transitions become compile-time errors
+- typo risk drops
+
+
+B) Document valid state transitions
+-----------------------------------
+Create a small transition table in docs:
+- who sets each state
+- when it changes
+- what terminal states are
+
+This prevents logic drift between services.
+
+
+C) Respect data model boundaries
+--------------------------------
+Before writing relation fields:
+- check referenced model and id type
+- verify relation cardinality
+- avoid using "any" in core pipeline paths
+
+In this bug, typing execution as any hid model mismatch.
+
+
+D) Prefer compare-and-set updates for queue claims
+--------------------------------------------------
+For distributed workers, do conditional update claims:
+- where: { id, status: pending }
+- data: { status: executing }
+- proceed only if updated count == 1
+
+This pattern is robust and scalable.
+
+
+E) Add one integration test for queue lifecycle
+------------------------------------------------
+A single test should verify:
+1) hook creates pending execution
+2) worker picks it
+3) nodes complete
+4) execution becomes completed
+5) logs are success/failure but not permanently running
+
+This catches exactly this class of regression.
+
+====================================================================
+6) QUICK DEBUG CHECKLIST FOR FUTURE INCIDENTS
+====================================================================
+When jobs are stuck in executing/running, check in this order:
+
+1. Producer status
+   - Are new rows inserted as pending?
+
+2. Consumer claim query
+   - Does worker query same statuses producer uses?
+
+3. Atomic claim
+   - Is claim conditional and race-safe?
+
+4. Relation IDs
+   - Are foreign keys referencing correct model + type?
+
+5. Finalizers
+   - Are completed/failed updates guaranteed in try/catch?
+
+6. Runtime errors
+   - Any transaction timeout (P2028), FK errors, or pool exhaustion?
+
+====================================================================
+7) EXTRA NOTE ABOUT YOUR TERMINAL ERRORS
+====================================================================
+You also had EADDRINUSE errors (ports already in use) in other apps.
+That is separate from worker queue logic, but it can confuse diagnosis.
+
+Suggestion:
+- run worker and hooks independently while debugging queue flow
+- avoid full monorepo dev command during focused backend troubleshooting
+
+====================================================================
+8) SHORT SUMMARY
+====================================================================
+Your main mistakes were:
+- wrong queue status at enqueue time
+- interactive transaction claim in hot polling loop
+- relation ID mismatch between Execution and WorkflowRun log writes
+
+The fix made queue ownership explicit, claim logic safer, and relation writes correct.
+That is why worker resumed processing and executions started reaching terminal states.

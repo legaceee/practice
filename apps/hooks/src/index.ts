@@ -23,7 +23,7 @@ app.post("/hooks/:workflowId", async (req, res) => {
     await prisma.execution.create({
       data: {
         workflowId: workflow.id,
-        status: "executing",
+        status: "pending",
         triggerData: payload,
       },
     });
