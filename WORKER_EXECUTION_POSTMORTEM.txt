@@ -233,3 +233,49 @@ Your main mistakes were:
 
 The fix made queue ownership explicit, claim logic safer, and relation writes correct.
 That is why worker resumed processing and executions started reaching terminal states.
+
+====================================================================
+9) YOUR NEW ERROR: "continue (Jump target cannot cross function boundary)"
+====================================================================
+What this means:
+- `continue` can only be used inside the same loop block where it appears.
+- In your previous worker version, `continue` was inside `prisma.$transaction(async (tx) => { ... })`.
+- That callback is a different function scope from `while (true)`, so TypeScript rejects it.
+
+Bad shape (causes your error):
+- `while (true) { await prisma.$transaction(async () => { continue; }); }`
+
+Working shape:
+- Do atomic DB claim work inside helper function.
+- Return `null` from helper when no job is claimable.
+- Use `continue` only in outer `while (true)` loop.
+
+Steps implemented in `apps/workers/src/index.ts`:
+
+Step 1: Create atomic claim helper
+----------------------------------
+`claimNextExecutionAtomically()` now:
+1) findFirst pending/executing
+2) conditionally claim with updateMany
+3) return execution with workflow+nodes if claim succeeds
+4) return null if no claim happened
+
+Step 2: Keep loop control in outer worker loop
+----------------------------------------------
+In `processExecutions()`:
+1) call `const execution = await claimNextExecutionAtomically()`
+2) if execution is null, sleep poll interval and `continue`
+3) if execution exists, run `await runWorkflow(execution)`
+
+Step 3: Keep transaction small and safe
+---------------------------------------
+- Transaction only handles claim/read DB state.
+- Actual workflow execution runs outside transaction.
+- This reduces lock time and avoids transaction contention in polling loop.
+
+Learning rule to remember:
+--------------------------
+Inside callback functions (`map`, `forEach`, `transaction`, etc.),
+never try to `break`/`continue` an outer loop.
+Return a value (or throw) from callback, then decide `continue`/`break`
+in the outer loop where control statements are valid.
