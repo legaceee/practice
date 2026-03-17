@@ -2,6 +2,7 @@ import "dotenv/config";
 import { prisma } from "@repo/db";
 import { sendEmail } from "./services/sendEmail.js";
 import { retry } from "./retry.js";
+import { actionRegistry } from "./utils/actionRegistry.js";
 
 const POLL_INTERVAL_MS = 2000;
 const ERROR_RETRY_MS = 5000;
@@ -190,25 +191,30 @@ async function executeNode(node: any, execution: any, workflowRunId: string) {
   });
 
   try {
-    switch (node.service) {
-      case "console":
-        console.log("console action:", execution.triggerData);
-        break;
-      case "webhook":
-        const data = await fetch(node.config.url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(execution.triggerData),
-        });
-        console.log("this is the webhook fetch", data);
-        break;
-      case "mail":
-        await sendEmail(node.config, execution.triggerData);
-        break;
+    // switch (node.service) {
+    //   case "console":
+    //     console.log("console action:", execution.triggerData);
+    //     break;
+    //   case "webhook":
+    //     const data = await fetch(node.config.url, {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify(execution.triggerData),
+    //     });
+    //     console.log("this is the webhook fetch", data);
+    //     break;
+    //   case "mail":
+    //     await sendEmail(node.config, execution.triggerData);
+    //     break;
 
-      default:
-        console.log("unknown service :", node.service);
+    //   default:
+    //     console.log("unknown service :", node.service);
+    // }
+    const handler = actionRegistry[node.service];
+    if (!handler) {
+      throw new Error(`NO HANDLER REGISTRY ${node.service}`);
     }
+    await handler(node.config, execution.triggerData);
     await prisma.executionLog.update({
       where: { id: log.id },
       data: { status: "success" },
