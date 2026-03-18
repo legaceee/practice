@@ -52,6 +52,7 @@ model WorkflowRun {
   status       String
   startedAt    DateTime         @default(now())
   finishedAt   DateTime?
+  triggerData Json
   action       ActionExecution?
   executionlog ExecutionLog[]
   workflow     Workflow         @relation(fields: [workflowId], references: [id])

@@ -9,7 +9,7 @@ const ERROR_RETRY_MS = 5000;
 
 async function claimNextExecutionAtomically() {
   return prisma.$transaction(async (tx) => {
-    const nextExecution = await tx.execution.findFirst({
+    const nextExecution = await tx.workflowRun.findFirst({
       where: {
         status: { in: ["pending", "executing"] },
       },
@@ -22,7 +22,7 @@ async function claimNextExecutionAtomically() {
       return null;
     }
 
-    const claimedExecution = await tx.execution.updateMany({
+    const claimedExecution = await tx.workflowRun.updateMany({
       where: {
         id: nextExecution.id,
         status: { in: ["pending", "executing"] },
@@ -30,7 +30,7 @@ async function claimNextExecutionAtomically() {
       data: {
         status: "executing",
         startedAt: new Date(),
-        endedAt: null,
+        finishedAt: null,
       },
     });
 
@@ -38,7 +38,7 @@ async function claimNextExecutionAtomically() {
       return null;
     }
 
-    return tx.execution.findUnique({
+    return tx.workflowRun.findUnique({
       where: {
         id: nextExecution.id,
       },
@@ -104,6 +104,10 @@ async function processExecutions() {
         await new Promise((res) => setTimeout(res, POLL_INTERVAL_MS));
         continue;
       }
+      const context = {
+        trigger: execution.triggerData,
+        steps: {},
+      };
 
       await runWorkflow(execution);
     } catch (error) {
@@ -181,7 +185,16 @@ async function runWorkflow(execution: any) {
 
 async function executeNode(node: any, execution: any, workflowRunId: string) {
   console.log("Executing node:", node.service, node.config);
-
+  const exsiting = await prisma.actionExecution.findFirst({
+    where: {
+      workflowRunId,
+      actionId: node.id.toString(),
+    },
+  });
+  if (exsiting) {
+    console.log("skipping duplicate execution", node.id);
+    return;
+  }
   const log = await prisma.executionLog.create({
     data: {
       workflowRunId,
@@ -191,25 +204,6 @@ async function executeNode(node: any, execution: any, workflowRunId: string) {
   });
 
   try {
-    // switch (node.service) {
-    //   case "console":
-    //     console.log("console action:", execution.triggerData);
-    //     break;
-    //   case "webhook":
-    //     const data = await fetch(node.config.url, {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify(execution.triggerData),
-    //     });
-    //     console.log("this is the webhook fetch", data);
-    //     break;
-    //   case "mail":
-    //     await sendEmail(node.config, execution.triggerData);
-    //     break;
-
-    //   default:
-    //     console.log("unknown service :", node.service);
-    // }
     const handler = actionRegistry[node.service];
     if (!handler) {
       throw new Error(`NO HANDLER REGISTRY ${node.service}`);
@@ -218,6 +212,13 @@ async function executeNode(node: any, execution: any, workflowRunId: string) {
     await prisma.executionLog.update({
       where: { id: log.id },
       data: { status: "success" },
+    });
+    await prisma.actionExecution.create({
+      data: {
+        workflowRunId,
+        actionId: node.id.toString(),
+        status: "success",
+      },
     });
   } catch (error: any) {
     await prisma.executionLog.update({
