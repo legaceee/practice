@@ -79,15 +79,7 @@ async function runWorkflow(execution: any, context: any) {
   let workflowRunId: string | undefined;
 
   try {
-    const workflowRun = await prisma.workflowRun.create({
-      data: {
-        workflowId: execution.workflowId,
-        status: "executing",
-        triggerData: context,
-      },
-    });
-
-    workflowRunId = workflowRun.id;
+    workflowRunId = execution.id;
 
     const actionNodes = execution.workflow.nodes
       .filter((n: any) => n.type === "action")
@@ -95,7 +87,7 @@ async function runWorkflow(execution: any, context: any) {
 
     for (const node of actionNodes) {
       await retry(
-        () => executeNode(node, execution, workflowRunId as string),
+        () => executeNode(node, context, workflowRunId as string),
         3,
         2000,
       );
@@ -127,7 +119,7 @@ async function runWorkflow(execution: any, context: any) {
   }
 }
 
-async function executeNode(node: any, execution: any, workflowRunId: string) {
+async function executeNode(node: any, context: any, workflowRunId: string) {
   console.log("Executing node:", node.service, node.config);
   const exsiting = await prisma.actionExecution.findFirst({
     where: {
@@ -152,7 +144,8 @@ async function executeNode(node: any, execution: any, workflowRunId: string) {
     if (!handler) {
       throw new Error(`NO HANDLER REGISTRY ${node.service}`);
     }
-    await handler(node.config, execution.triggerData);
+    const res = await handler(node.config, context);
+    context.steps[node.id] = res;
     await prisma.executionLog.update({
       where: { id: log.id },
       data: { status: "success" },
