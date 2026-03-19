@@ -56,47 +56,6 @@ async function claimNextExecutionAtomically() {
 async function processExecutions() {
   console.log("worker started...");
   while (true) {
-    // try {
-    //   const nextExecution = await prisma.execution.findFirst({
-    //     where: { status: { in: ["pending", "executing"] } },
-    //     orderBy: { startedAt: "asc" },
-    //   });
-
-    //   if (!nextExecution) {
-    //     await new Promise((res) => setTimeout(res, POLL_INTERVAL_MS));
-    //     continue;
-    //   }
-
-    //   const claimedExecution = await prisma.execution.updateMany({
-    //     where: {
-    //       id: nextExecution.id,
-    //       status: { in: ["pending", "executing"] },
-    //     },
-    //     data: {
-    //       status: "executing",
-    //       startedAt: new Date(),
-    //       endedAt: null,
-    //     },
-    //   });
-
-    //   if (claimedExecution.count === 0) continue;
-
-    //   const executionWithWorkflow = await prisma.execution.findUnique({
-    //     where: { id: nextExecution.id },
-    //     include: {
-    //       workflow: {
-    //         include: { nodes: true },
-    //       },
-    //     },
-    //   });
-
-    //   if (!executionWithWorkflow) continue;
-
-    //   await runWorkflow(executionWithWorkflow);
-    // } catch (error) {
-    //   console.log("worker error", error);
-    //   await new Promise((res) => setTimeout(res, ERROR_RETRY_MS));
-    // }
     try {
       const execution = await claimNextExecutionAtomically();
 
@@ -149,14 +108,6 @@ async function runWorkflow(execution: any) {
       },
     });
 
-    await prisma.execution.update({
-      where: { id: execution.id },
-      data: {
-        status: "completed",
-        endedAt: new Date(),
-      },
-    });
-
     console.log("Execution completed:", execution.id);
   } catch (error) {
     console.error("Execution failed:", error);
@@ -172,14 +123,6 @@ async function runWorkflow(execution: any) {
         })
         .catch(() => null);
     }
-
-    await prisma.execution.update({
-      where: { id: execution.id },
-      data: {
-        status: "failed",
-        endedAt: new Date(),
-      },
-    });
   }
 }
 

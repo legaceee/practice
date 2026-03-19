@@ -20,7 +20,6 @@ model Workflow {
   userId      Int
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
-  executions  Execution[]
   nodes       Node[]
   user        User          @relation(fields: [userId], references: [id])
   workflowRun WorkflowRun[]
@@ -36,15 +35,6 @@ model Node {
   workflow   Workflow @relation(fields: [workflowId], references: [id])
 }
 
-model Execution {
-  id          Int       @id @default(autoincrement())
-  workflowId  Int
-  status      String
-  startedAt   DateTime  @default(now())
-  endedAt     DateTime?
-  triggerData Json
-  workflow    Workflow  @relation(fields: [workflowId], references: [id])
-}
 
 model WorkflowRun {
   id           String           @id @default(uuid())
