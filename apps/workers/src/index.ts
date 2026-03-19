@@ -11,7 +11,7 @@ async function claimNextExecutionAtomically() {
   return prisma.$transaction(async (tx) => {
     const nextExecution = await tx.workflowRun.findFirst({
       where: {
-        status: { in: ["pending", "executing"] },
+        status: { in: ["pending"] },
       },
       orderBy: {
         startedAt: "asc",
@@ -25,7 +25,7 @@ async function claimNextExecutionAtomically() {
     const claimedExecution = await tx.workflowRun.updateMany({
       where: {
         id: nextExecution.id,
-        status: { in: ["pending", "executing"] },
+        status: { in: ["pending"] },
       },
       data: {
         status: "executing",
@@ -68,14 +68,14 @@ async function processExecutions() {
         steps: {},
       };
 
-      await runWorkflow(execution);
+      await runWorkflow(execution, context);
     } catch (error) {
       await new Promise((res) => setTimeout(res, ERROR_RETRY_MS));
     }
   }
 }
 
-async function runWorkflow(execution: any) {
+async function runWorkflow(execution: any, context: any) {
   let workflowRunId: string | undefined;
 
   try {
@@ -83,6 +83,7 @@ async function runWorkflow(execution: any) {
       data: {
         workflowId: execution.workflowId,
         status: "executing",
+        triggerData: context,
       },
     });
 
