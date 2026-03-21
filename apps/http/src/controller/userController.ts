@@ -16,14 +16,34 @@ export const signup = async function (req: any, res: any) {
     }
     // const hashedPassword = jwt.sign(password, process.env.JWT_SECRET!);
     const hashedPassword = await bcrypt.hash(password, 12);
+
     const user = await prisma.user.create({
       data: {
         email: email,
         password: hashedPassword,
       },
     });
+    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+      expiresIn: "15m",
+    });
+    const refreshToken = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" },
+    );
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken,
+      },
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
     res.status(200).json({
-      message: "signup succesfull",
+      message: accessToken,
     });
   } catch (err) {
     console.error(err);
@@ -62,7 +82,24 @@ export const signin = async function (req: any, res: any) {
       message: "enter the correct password",
     });
   }
+  const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+    expiresIn: "15m",
+  });
+  const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+    expiresIn: "7d",
+  });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      refreshToken,
+    },
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
   res.status(200).json({
-    message: "login succesfull",
+    message: accessToken,
   });
 };
