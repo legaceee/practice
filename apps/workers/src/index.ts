@@ -57,18 +57,18 @@ async function processExecutions() {
   console.log("worker started...");
   while (true) {
     try {
-      const execution = await claimNextExecutionAtomically();
+      const workflowRun = await claimNextExecutionAtomically();
 
-      if (!execution) {
+      if (!workflowRun) {
         await new Promise((res) => setTimeout(res, POLL_INTERVAL_MS));
         continue;
       }
       const context = {
-        trigger: execution.triggerData,
+        trigger: workflowRun.triggerData,
         steps: {},
       };
 
-      await runWorkflow(execution, context);
+      await runWorkflow(workflowRun, context);
     } catch (error) {
       await new Promise((res) => setTimeout(res, ERROR_RETRY_MS));
     }
