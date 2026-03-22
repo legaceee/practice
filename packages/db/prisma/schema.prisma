@@ -6,6 +6,14 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+enum NodeType{
+  TRIGGER
+  ACTION
+}
+enum Service{
+  EMAIL
+  WEBHOOK
+}
 
 model User {
   id        Int        @id @default(autoincrement())
@@ -29,8 +37,8 @@ model Workflow {
 model Node {
   id         Int      @id @default(autoincrement())
   workflowId Int
-  type       String
-  service    String
+  type       NodeType 
+  service    Service
   config     Json
   order      Int
   workflow   Workflow @relation(fields: [workflowId], references: [id])
@@ -66,5 +74,3 @@ model ActionExecution {
   status        String
   workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
 }
-
-
