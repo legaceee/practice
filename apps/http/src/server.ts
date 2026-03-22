@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import "dotenv/config";
 import workflowRoutes from "./routes/workflowRoutes.js";
 import { user } from "./routes/userRoutes.js";
+import nodeRoutes from "./routes/nodeRoutes.js";
 
 const port = process.env.PORT || 3001;
 const app = express();
@@ -19,6 +20,7 @@ app.use(cookieParser());
 
 app.use("/workflows", workflowRoutes);
 app.use("/auth", user);
+app.use("/node", nodeRoutes);
 
 app.get("/", async (req, res) => {
   // const data = await prisma.user.findFirst();
