@@ -1,8 +1,9 @@
 import prisma from "@repo/db";
+import { Request, Response } from "express";
 
-export const nodeCreation = async (req: any, res: any) => {
+export const nodeCreation = async (req: Request, res: Response) => {
   try {
-    const workflowId = req.params.workflow;
+    const workflowId = parseInt(req.params.workflow as string);
     const { type, service, config, order } = req.body;
     if (!type || !service || !config || order === undefined) {
       return res.status(400).json({
@@ -39,9 +40,9 @@ export const nodeCreation = async (req: any, res: any) => {
   }
 };
 
-export const getNodes = async (req: any, res: any) => {
+export const getNode = async (req: Request, res: Response) => {
   try {
-    const nodeId = req.params.nodeId;
+    const nodeId = parseInt(req.params.nodeId as string);
     if (!nodeId) {
       return res.status(400).json({
         message: "node id is required",
@@ -59,9 +60,7 @@ export const getNodes = async (req: any, res: any) => {
     }
     res.status(200).json({
       message: "success",
-      data: {
-        node,
-      },
+      data: node,
     });
   } catch (err) {
     console.error("something went wrong");
