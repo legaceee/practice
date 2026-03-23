@@ -1,7 +1,8 @@
 import prisma from "@repo/db";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-export const signup = async function (req: any, res: any) {
+import { Request, Response } from "express";
+export const signup = async function (req: Request, res: Response) {
   try {
     const { email, password } = req.body;
     if (!email) {
@@ -53,7 +54,7 @@ export const signup = async function (req: any, res: any) {
   }
 };
 
-export const signin = async function (req: any, res: any) {
+export const signin = async function (req: Request, res: Response) {
   const { email, password } = req.body;
   if (!email) {
     return res.status(201).json({
