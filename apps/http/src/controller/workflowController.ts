@@ -75,21 +75,22 @@ function parseWorkflowInput(body: unknown): {
   error?: string;
 } {
   if (!isRecord(body)) {
-    return { error: "Invalid payload" };
+    return { error: "Invalid payload" }; //checking if the data is object not null and not array
   }
 
   const rawName = body.name;
   if (typeof rawName !== "string") {
+    //if name is not string return
     return { error: "name is required" };
   }
 
-  const name = rawName.trim();
+  const name = rawName.trim(); //trim extra spaces from name
   if (name.length === 0 || name.length > MAX_NAME_LENGTH) {
     return { error: `name must be 1-${MAX_NAME_LENGTH} characters` };
   }
 
   const rawIsActive = body.isActive;
-  const isActive = rawIsActive === undefined ? true : Boolean(rawIsActive);
+  const isActive = rawIsActive === undefined ? true : Boolean(rawIsActive); //if rawIsActive is not defined set the default true val else rawisactive
 
   const rawNodes = body.nodes;
   if (!Array.isArray(rawNodes)) {
@@ -130,7 +131,7 @@ function parseWorkflowInput(body: unknown): {
     }
 
     if (seenOrders.has(order)) {
-      return { error: `nodes[${index}].order must be unique` };
+      return { error: `nodes[${index}].order must be unique` }; //dont let order be given again
     }
     seenOrders.add(order);
 
