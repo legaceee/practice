@@ -28,14 +28,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function hasReservedKeys(value: unknown): boolean {
+  //if array then run this
   if (Array.isArray(value)) {
     return value.some((item) => hasReservedKeys(item));
   }
-
+  //if single value not obj not array than check this
   if (!isRecord(value)) {
     return false;
   }
-
+  //if object check this
   for (const [key, nested] of Object.entries(value)) {
     if (RESERVED_KEYS.has(key)) {
       return true;
