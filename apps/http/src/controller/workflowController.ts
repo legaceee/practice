@@ -217,7 +217,7 @@ export async function createWorkflow(req: Request, res: Response) {
 }
 
 export const deleteWorkflow = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: any) => {
     const { workflowId } = req.body;
     if (!workflowId) {
       throw new AppError("workflow id is required", 400);
@@ -237,5 +237,6 @@ export const deleteWorkflow = asyncHandler(
     res.status(200).json({
       message: `workflow ${parseWorkflowId} deleted successfully`,
     });
+    next();
   },
 );

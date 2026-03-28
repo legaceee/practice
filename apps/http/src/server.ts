@@ -5,6 +5,7 @@ import "dotenv/config";
 import workflowRoutes from "./routes/workflowRoutes.js";
 import { user } from "./routes/userRoutes.js";
 import nodeRoutes from "./routes/nodeRoutes.js";
+import globalErrorHandler from "./utils/globalErrorHandler.js";
 
 const port = process.env.PORT || 3001;
 const app = express();
@@ -22,14 +23,7 @@ app.use("/workflows", workflowRoutes);
 app.use("/auth", user);
 app.use("/node", nodeRoutes);
 
-app.get("/", async (req, res) => {
-  // const data = await prisma.user.findFirst();
-  res.send("Hello world");
-});
-
-app.use((req, res) => {
-  res.status(404).json({ message: "Not found" });
-});
+app.use(globalErrorHandler);
 
 app.listen(port, () => {
   console.log(`server running on port ${port}`);
