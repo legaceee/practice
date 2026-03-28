@@ -2,6 +2,11 @@ import { prisma } from "@repo/db";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { Request, Response } from "express";
+import z from "zod";
+
+const user = {
+  email: z.email(),
+};
 
 type userInput = {
   email: string;

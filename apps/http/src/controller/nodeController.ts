@@ -41,7 +41,7 @@ function hasReservedKeys(value: unknown): boolean {
     if (RESERVED_KEYS.has(key)) {
       return true;
     }
-
+    //for nested val we again do recursion
     if (hasReservedKeys(nested)) {
       return true;
     }
@@ -49,7 +49,7 @@ function hasReservedKeys(value: unknown): boolean {
 
   return false;
 }
-
+//jsonValue validation
 function isJsonValue(value: unknown): value is JsonInputValue {
   const valueType = typeof value;
   if (
@@ -70,7 +70,7 @@ function isJsonValue(value: unknown): value is JsonInputValue {
 
   return Object.values(value).every((item) => isJsonValue(item));
 }
-
+//positive integer only valid
 function parsePositiveInt(value: unknown): number | null {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
@@ -78,7 +78,7 @@ function parsePositiveInt(value: unknown): number | null {
   }
   return parsed;
 }
-
+//order valid only if integer and less than maxorder
 function parseOrder(value: unknown): number | null {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > MAX_ORDER) {
@@ -86,7 +86,7 @@ function parseOrder(value: unknown): number | null {
   }
   return parsed;
 }
-
+//nodeType is trigger or service
 function normalizeNodeType(value: unknown): NodeTypeValue | null {
   if (typeof value !== "string") {
     return null;
@@ -99,7 +99,7 @@ function normalizeNodeType(value: unknown): NodeTypeValue | null {
 
   return null;
 }
-
+//service type is email or webhook
 function normalizeService(value: unknown): ServiceTypeValue | null {
   if (typeof value !== "string") {
     return null;
@@ -112,7 +112,7 @@ function normalizeService(value: unknown): ServiceTypeValue | null {
 
   return null;
 }
-
+//authentication 3 layer
 function getAuthenticatedUserId(req: Request): number | null {
   const authReq = req as AuthRequest;
   const fromReq = parsePositiveInt(authReq.userId);
@@ -132,25 +132,26 @@ function getAuthenticatedUserId(req: Request): number | null {
 
   return null;
 }
-
+//validate input for node creation
 function parseNodeCreateInput(body: unknown): {
   data?: NodeCreateInput;
   error?: string;
 } {
+  //if not object or is array or is empty
   if (!isRecord(body)) {
     return { error: "Invalid payload" };
   }
-
+  //check validation for type
   const type = normalizeNodeType(body.type);
   if (!type) {
     return { error: "type must be TRIGGER or ACTION" };
   }
-
+  //check validation for service
   const service = normalizeService(body.service);
   if (!service) {
     return { error: "service must be EMAIL or WEBHOOK" };
   }
-
+  //if no config in body return
   if (!("config" in body)) {
     return { error: "config is required" };
   }
@@ -190,7 +191,7 @@ function parseNodeUpdateInput(body: unknown): {
   if (!isRecord(body)) {
     return { error: "Invalid payload" };
   }
-
+  //nodeupdateinput empty object
   const updates: NodeUpdateInput = {};
 
   if ("type" in body) {

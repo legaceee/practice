@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "@repo/db";
+import { asyncHandler } from "../utils/tryCatch";
+import { AppError } from "../utils/errorHandler";
 
 type NodeInput = {
   type: string;
@@ -213,3 +215,27 @@ export async function createWorkflow(req: Request, res: Response) {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
+export const deleteWorkflow = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { workflowId } = req.body;
+    if (!workflowId) {
+      throw new AppError("workflow id is required", 400);
+    }
+    const parseWorkflowId = Number(workflowId);
+    if (isNaN(parseWorkflowId)) {
+      throw new AppError("workflow id should be number", 400);
+    }
+    const deleteWorkflow = await prisma.workflow.delete({
+      where: {
+        id: parseWorkflowId,
+      },
+    });
+    if (!deleteWorkflow) {
+      throw new AppError("Workflow doesnt exist", 404);
+    }
+    res.status(200).json({
+      message: `workflow ${parseWorkflowId} deleted successfully`,
+    });
+  },
+);
