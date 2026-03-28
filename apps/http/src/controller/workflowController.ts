@@ -1,7 +1,8 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { prisma } from "@repo/db";
 import { asyncHandler } from "../utils/tryCatch";
 import { AppError } from "../utils/errorHandler";
+import { AuthRequest } from "../utils/authRequest";
 
 type NodeInput = {
   type: string;
@@ -163,8 +164,8 @@ function parseWorkflowInput(body: unknown): {
   };
 }
 
-export async function createWorkflow(req: Request, res: Response) {
-  const userId = getAuthenticatedUserId(req);
+export async function createWorkflow(req: AuthRequest, res: Response) {
+  const userId = Number(req.userId);
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -175,36 +176,39 @@ export async function createWorkflow(req: Request, res: Response) {
   }
 
   try {
-    const created = await prisma.$transaction(async (tx) => {
-      const workflow = await tx.workflow.create({
-        data: {
-          name: data.name,
-          userId,
-          isActive: data.isActive,
-        },
-      });
+    const created = await prisma.$transaction(
+      async (tx) => {
+        const workflow = await tx.workflow.create({
+          data: {
+            name: data.name,
+            userId,
+            isActive: data.isActive,
+          },
+        });
 
-      await tx.node.createMany({
-        data: data.nodes.map((node) => ({
-          workflowId: workflow.id,
-          type: node.type,
-          service: node.service,
-          config: node.config,
-          order: node.order,
-        })),
-      });
+        await tx.node.createMany({
+          data: data.nodes.map((node) => ({
+            workflowId: workflow.id,
+            type: node.type,
+            service: node.service,
+            config: node.config,
+            order: node.order,
+          })),
+        });
 
-      return tx.workflow.findUnique({
-        where: { id: workflow.id },
-        include: {
-          nodes: {
-            orderBy: {
-              order: "asc",
+        return tx.workflow.findUnique({
+          where: { id: workflow.id },
+          include: {
+            nodes: {
+              orderBy: {
+                order: "asc",
+              },
             },
           },
-        },
-      });
-    });
+        });
+      },
+      { maxWait: 5000, timeout: 30000 },
+    );
 
     return res.status(201).json({ workflow: created });
   } catch (error) {
@@ -217,7 +221,7 @@ export async function createWorkflow(req: Request, res: Response) {
 }
 
 export const deleteWorkflow = asyncHandler(
-  async (req: Request, res: Response, next: any) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     const { workflowId } = req.body;
     if (!workflowId) {
       throw new AppError("workflow id is required", 400);
