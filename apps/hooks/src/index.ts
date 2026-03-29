@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import "dotenv/config";
 import { prisma } from "@repo/db";
+import { hasRestricted, parsePayload } from "./utils/parsePayload";
 const app = express();
 app.use(express.json());
 const port = process.env.PORT2 || 3000;
@@ -15,6 +16,17 @@ app.post("/hooks/:workflowId", async (req, res) => {
       });
     }
     const payload = req.body;
+    if (hasRestricted(payload)) {
+      return res.status(500).json({
+        message: "cannot contain restricted keywords",
+      });
+    }
+
+    if (!parsePayload(payload)) {
+      return res.status(500).json({
+        message: "body should be object ",
+      });
+    }
 
     const workflow = await prisma.workflow.findUnique({
       where: { id: workflowId },
