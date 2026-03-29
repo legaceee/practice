@@ -8,49 +8,52 @@ const POLL_INTERVAL_MS = 2000;
 const ERROR_RETRY_MS = 5000;
 
 async function claimNextExecutionAtomically() {
-  return prisma.$transaction(async (tx) => {
-    const nextExecution = await tx.workflowRun.findFirst({
-      where: {
-        status: { in: ["pending"] },
-      },
-      orderBy: {
-        startedAt: "asc",
-      },
-    });
+  return prisma.$transaction(
+    async (tx) => {
+      const nextExecution = await tx.workflowRun.findFirst({
+        where: {
+          status: { in: ["pending"] },
+        },
+        orderBy: {
+          startedAt: "asc",
+        },
+      });
 
-    if (!nextExecution) {
-      return null;
-    }
+      if (!nextExecution) {
+        return null;
+      }
 
-    const claimedExecution = await tx.workflowRun.updateMany({
-      where: {
-        id: nextExecution.id,
-        status: { in: ["pending"] },
-      },
-      data: {
-        status: "executing",
-        startedAt: new Date(),
-        finishedAt: null,
-      },
-    });
+      const claimedExecution = await tx.workflowRun.updateMany({
+        where: {
+          id: nextExecution.id,
+          status: { in: ["pending"] },
+        },
+        data: {
+          status: "executing",
+          startedAt: new Date(),
+          finishedAt: null,
+        },
+      });
 
-    if (claimedExecution.count === 0) {
-      return null;
-    }
+      if (claimedExecution.count === 0) {
+        return null;
+      }
 
-    return tx.workflowRun.findUnique({
-      where: {
-        id: nextExecution.id,
-      },
-      include: {
-        workflow: {
-          include: {
-            nodes: true,
+      return tx.workflowRun.findUnique({
+        where: {
+          id: nextExecution.id,
+        },
+        include: {
+          workflow: {
+            include: {
+              nodes: true,
+            },
           },
         },
-      },
-    });
-  });
+      });
+    },
+    { maxWait: 5000 },
+  );
 }
 
 async function processExecutions() {
