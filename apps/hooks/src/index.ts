@@ -9,6 +9,11 @@ console.log(process.env.DATABASE_URL, "this was the set value");
 app.post("/hooks/:workflowId", async (req, res) => {
   try {
     const workflowId = parseInt(req.params.workflowId);
+    if (isNaN(workflowId)) {
+      return res.status(500).json({
+        message: "workflow id should be number",
+      });
+    }
     const payload = req.body;
 
     const workflow = await prisma.workflow.findUnique({
@@ -34,33 +39,33 @@ app.post("/hooks/:workflowId", async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
-app.post("/hooks/create/:node", async (req, res) => {
-  try {
-    const workflowId = parseInt(req.params.node);
-    const payload = req.body;
-    const workflow = await prisma.workflow.findFirst({
-      where: { id: workflowId },
-    });
-    if (!workflow || !workflowId) {
-      return res.status(401).json({
-        message: "workflow doesnt exist",
-      });
-    }
-    await prisma.node.create({
-      data: {
-        workflowId: workflow.id,
-        type: payload.type,
-        service: payload.service,
-        config: payload.config,
-        order: Number(payload.order),
-      },
-    });
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      message: "something went wrong",
-    });
-  }
-});
+// app.post("/hooks/create/:node", async (req, res) => {
+//   try {
+//     const workflowId = parseInt(req.params.node);
+//     const payload = req.body;
+//     const workflow = await prisma.workflow.findFirst({
+//       where: { id: workflowId },
+//     });
+//     if (!workflow || !workflowId) {
+//       return res.status(401).json({
+//         message: "workflow doesnt exist",
+//       });
+//     }
+//     await prisma.node.create({
+//       data: {
+//         workflowId: workflow.id,
+//         type: payload.type,
+//         service: payload.service,
+//         config: payload.config,
+//         order: Number(payload.order),
+//       },
+//     });
+//     res.status(200).json({ success: true });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({
+//       message: "something went wrong",
+//     });
+//   }
+// });
 app.listen(port);
