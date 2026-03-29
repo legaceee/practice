@@ -1,4 +1,10 @@
-type JSONInputValue = string | number | { [key: string]: JSONInputValue };
+type JSONInputValue =
+  | string
+  | number
+  | boolean
+  | { [key: string]: JSONInputValue }
+  | JSONInputValue[];
+
 export const parsePayload = (val: unknown): val is JSONInputValue => {
   if (typeof val === "string" || typeof val === "number") {
     return true;
