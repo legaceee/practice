@@ -1,7 +1,16 @@
-export const parsePayload = (val: unknown) => {
+type JSONInputValue = string | number | { [key: string]: JSONInputValue };
+export const parsePayload = (val: unknown): val is JSONInputValue => {
   if (typeof val === "string" || typeof val === "number") {
     return true;
   }
+  if (Array.isArray(val)) {
+    val.every((item) => parsePayload(item));
+  }
+  if (!isRecord(val)) {
+    return false;
+  }
+
+  return Object.values(val).every((item) => parsePayload(item));
 };
 
 export const isRecord = (val: any): val is Record<string, unknown> => {
