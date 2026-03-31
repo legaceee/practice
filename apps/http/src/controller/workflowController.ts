@@ -244,3 +244,28 @@ export const deleteWorkflow = asyncHandler(
     next();
   },
 );
+
+export const getWorkflow = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const userId = req.userId;
+    if (!userId) {
+      throw new AppError("not authorised", 201);
+    }
+    const workflowId = Number(req.params.workflowId);
+    if (!workflowId || isNaN(workflowId)) {
+      throw new AppError("workflow id is required", 501);
+    }
+    const workflow = await prisma.workflow.findUnique({
+      where: {
+        id: workflowId,
+      },
+      select: {
+        nodes: true,
+      },
+    });
+    res.status(200).json({
+      message: workflow,
+    });
+    next();
+  },
+);
