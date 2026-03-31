@@ -263,6 +263,9 @@ export const getWorkflow = asyncHandler(
         nodes: true,
       },
     });
+    if (!workflow) {
+      throw new AppError("workflow does not exists", 500);
+    }
     res.status(200).json({
       message: workflow,
     });
