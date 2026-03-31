@@ -3,6 +3,7 @@ import { prisma } from "@repo/db";
 import { asyncHandler } from "../utils/tryCatch";
 import { AppError } from "../utils/errorHandler";
 import { AuthRequest } from "../utils/authRequest";
+import { Prisma } from "../../../../packages/db/dist/generated/prisma/client";
 
 type NodeInput = {
   type: string;
@@ -220,9 +221,13 @@ export async function createWorkflow(req: AuthRequest, res: Response) {
   }
 }
 
+export const updateWorkflow = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {},
+);
+
 export const deleteWorkflow = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { workflowId } = req.body;
+    const workflowId = req.params.workflowId;
     if (!workflowId) {
       throw new AppError("workflow id is required", 400);
     }
@@ -230,11 +235,28 @@ export const deleteWorkflow = asyncHandler(
     if (isNaN(parseWorkflowId)) {
       throw new AppError("workflow id should be number", 400);
     }
-    const deleteWorkflow = await prisma.workflow.delete({
-      where: {
-        id: parseWorkflowId,
+    console.log(parseWorkflowId);
+    // const deleteWorkflow = await prisma.workflow.delete({
+    //   where: {
+    //     id: parseWorkflowId,
+    //   },
+    //   include: {
+    //     nodes: true,
+    //   },
+    // });
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.node.deleteMany({
+          where: {
+            workflowId: parseWorkflowId,
+          },
+        });
+        await tx.workflow.delete({
+          where: { id: parseWorkflowId },
+        });
       },
-    });
+      { maxWait: 5000, timeout: 30000 },
+    );
     if (!deleteWorkflow) {
       throw new AppError("Workflow doesnt exist", 404);
     }

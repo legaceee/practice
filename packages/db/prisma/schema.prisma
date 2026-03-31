@@ -30,7 +30,7 @@ model Workflow {
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   nodes       Node[]
-  user        User          @relation(fields: [userId], references: [id])
+  user        User          @relation(fields: [userId], references: [id],onDelete: Cascade)
   workflowRun WorkflowRun[]
 }
 
@@ -41,7 +41,7 @@ model Node {
   service    Service
   config     Json
   order      Int
-  workflow   Workflow @relation(fields: [workflowId], references: [id])
+  workflow   Workflow @relation(fields: [workflowId], references: [id],onDelete: Cascade)
 }
 
 
