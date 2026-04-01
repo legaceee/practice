@@ -3,7 +3,6 @@ import { prisma } from "@repo/db";
 import { asyncHandler } from "../utils/tryCatch";
 import { AppError } from "../utils/errorHandler";
 import { AuthRequest } from "../utils/authRequest";
-import { Prisma } from "../../../../packages/db/dist/generated/prisma/client";
 
 type NodeInput = {
   type: string;
@@ -16,6 +15,10 @@ type WorkflowInput = {
   name: string;
   isActive: boolean;
   nodes: NodeInput[];
+};
+type updateWorkflow = {
+  name?: string;
+  isActive?: boolean;
 };
 
 const MAX_NAME_LENGTH = 120;
@@ -220,9 +223,76 @@ export async function createWorkflow(req: AuthRequest, res: Response) {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+function parseBoolean(value: unknown): boolean | null {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  return null;
+}
+function parseUpdateWorkflow(body: unknown): {
+  data?: updateWorkflow;
+  error?: string;
+} {
+  if (!isRecord(body)) {
+    return { error: "body should be record" };
+  }
+  const updateWorkflow: updateWorkflow = {};
+  if ("name" in body) {
+    if (typeof body.name !== "string") {
+      return { error: "name must be a string" };
+    }
+    const name = body.name.trim();
+    if (hasReservedKeys(name)) {
+      return { error: "name contains restricted keywords" };
+    }
+    if (name.length === 0 || name.length > MAX_NAME_LENGTH) {
+      return { error: `name must be 1-${MAX_NAME_LENGTH} characters` };
+    }
+
+    updateWorkflow.name = name;
+  }
+  if ("isActive" in body) {
+    const isActive = parseBoolean(body.isActive);
+    if (!isActive) {
+      return { error: "isActive should be either true or false" };
+    }
+    updateWorkflow.isActive = isActive;
+  }
+  return { data: updateWorkflow };
+}
 
 export const updateWorkflow = asyncHandler(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {},
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const userId = Number(req.userId);
+    if (!userId || isNaN(userId)) {
+      throw new AppError("not authorised", 401);
+    }
+
+    const workflowId = Number(req.params.workflowId);
+    if (!workflowId || isNaN(workflowId)) {
+      throw new AppError("workflow id should be a number", 400);
+    }
+    const workflow = await prisma.workflow.findFirst({
+      where: {
+        userId: userId,
+        id: workflowId,
+      },
+    });
+    if (!workflow) {
+      throw new AppError("user does not have any workflow", 400);
+    }
+    const { data, error } = parseUpdateWorkflow(req.body);
+    if (error || !data) {
+      throw new AppError("body should have proper data", 400);
+    }
+    const updatedWorkflow = await prisma.workflow.update({
+      where: { id: workflowId },
+      data,
+    });
+    res.status(200).json({
+      message: updatedWorkflow,
+    });
+    next();
+  },
 );
 
 export const deleteWorkflow = asyncHandler(
@@ -290,6 +360,26 @@ export const getWorkflow = asyncHandler(
     }
     res.status(200).json({
       message: workflow,
+    });
+    next();
+  },
+);
+export const deleteAllWorkflow = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const userId = Number(req.userId);
+    if (!userId || isNaN(userId)) {
+      throw new AppError("not authenticated", 401);
+    }
+    const deleteAll = await prisma.workflow.deleteMany({
+      where: {
+        userId: userId,
+      },
+    });
+    if (!deleteAll) {
+      throw new AppError("user does not have any workflow", 400);
+    }
+    res.status(200).json({
+      message: `workflow deleted for user ${userId}`,
     });
     next();
   },
