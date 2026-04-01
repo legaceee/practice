@@ -188,5 +188,6 @@ export const changePass = asyncHandler(
     res.status(200).json({
       message: "your password is updated succesfully",
     });
+    next();
   },
 );
