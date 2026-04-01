@@ -1,12 +1,15 @@
 import { prisma } from "@repo/db";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import z from "zod";
+import { asyncHandler } from "../utils/tryCatch";
+import { AuthRequest } from "../utils/authRequest";
+import { AppError } from "../utils/errorHandler";
 
-const user = {
-  email: z.email(),
-};
+// const user = {
+//   email: z.email(),
+// };
 
 type userInput = {
   email: string;
@@ -152,3 +155,38 @@ export const signin = async function (req: Request, res: Response) {
     });
   }
 };
+
+export const changePass = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const userId = Number(req.userId);
+    if (!userId || isNaN(userId)) {
+      throw new AppError("you are not logged in", 401);
+    }
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) {
+      throw new AppError("user does not exist", 401);
+    }
+    const { newPassword, currentPassword } = req.body;
+    const hashedPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!hashedPassword) {
+      throw new AppError("enter the currentPassword", 400);
+    }
+    const newHashedPassword = await bcrypt.hash(newPassword, 12);
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: newHashedPassword,
+      },
+    });
+    res.status(200).json({
+      message: "your password is updated succesfully",
+    });
+  },
+);
