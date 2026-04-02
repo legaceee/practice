@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Navbar() {
   return (
-    <nav className="w-full border-b border-0 border-gray-200 bg-white">
+    <nav className="w-full border-b border-0 border-gray-200 bg-white ">
       <div className="max-w-375 mx-auto flex items-center justify-between p-2">
         <div className="flex gap-6">
           <div className="text-2xl font-bold">_zapier</div>
