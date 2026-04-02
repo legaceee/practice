@@ -29,10 +29,10 @@ export default function Page() {
   };
   console.log(form);
   return (
-    <div>
+    <div className="min-h-screen w-full">
       <Navbar />
       <div className="w-full">
-        <div className="max-w-4xl flex mx-auto mt-9">
+        <div className="md:max-w-4xl flex mx-auto mt-9">
           <div className="flex flex-col gap-6 items-center justify-center ">
             <h1 className="text-4xl">
               AI Automation starts and scales with Zapier
@@ -42,8 +42,8 @@ export default function Page() {
               into automated action today, and power tomorrow’s business growth.
             </p>
           </div>
-          <div className="flex flex-col border border-gray-300 p-6">
-            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          <div className="flex flex-col border border-gray-300 p-6 rounded-md shadow">
+            <form className="flex flex-col gap-6 " onSubmit={handleSubmit}>
               <div className="flex flex-col gap-1">
                 <h3>Email</h3>
                 <input
@@ -69,7 +69,10 @@ export default function Page() {
                 privacy policy.
               </p>
 
-              <button className="bg-amber-400 rounded-2xl p-4" type={"submit"}>
+              <button
+                className="bg-amber-500 rounded-2xl p-4 hover:bg-amber-700 text-white"
+                type={"submit"}
+              >
                 Signup
               </button>
             </form>
