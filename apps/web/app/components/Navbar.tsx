@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Navbar() {
   return (
-    <nav className="w-full border-b bg-white">
-      <div className="max-w-375 mx-auto flex items-center justify-between px-4 py-4">
+    <nav className="w-full border-b border-0 border-gray-200 bg-white">
+      <div className="max-w-375 mx-auto flex items-center justify-between p-2">
         <div className="flex gap-6">
           <div className="text-2xl font-bold">_zapier</div>
 
@@ -39,10 +39,11 @@ export default function Navbar() {
               Log in
             </p>
           </Link>
-
-          <button className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-800">
-            Sign up
-          </button>
+          <Link href={"/signup"}>
+            <button className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-800">
+              Sign up
+            </button>
+          </Link>
         </div>
       </div>
     </nav>
