@@ -191,3 +191,26 @@ export const changePass = asyncHandler(
     next();
   },
 );
+
+export const userExists = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+    if (!email) {
+      throw new AppError("enter the email", 401);
+    }
+    const user = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(user)) {
+      throw new AppError("enter valid email", 500);
+    }
+    const account = await prisma.user.findUnique({
+      where: { email: user },
+    });
+    if (!account) {
+      throw new AppError("user does not exist", 500);
+    }
+    res.status(200).json({
+      message: "ok",
+    });
+    next();
+  },
+);
