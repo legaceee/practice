@@ -206,10 +206,12 @@ export const userExists = asyncHandler(
       where: { email: user },
     });
     if (!account) {
-      throw new AppError("user does not exist", 500);
+      return res.status(500).json({
+        exists: false,
+      });
     }
     res.status(200).json({
-      message: "ok",
+      exists: true,
     });
     next();
   },

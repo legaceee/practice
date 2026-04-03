@@ -5,9 +5,28 @@ import google from "../../../public/google.svg";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import { useState } from "react";
-export default function page() {
+import { userExist } from "../../lib/auth";
+export default function Page() {
   const [email, setEmail] = useState("");
+  const [exists, setExist] = useState(false);
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
 
+    try {
+      const res = await userExist({ email: email });
+      if (res.exists) {
+        setExist(true);
+        alert("user exists");
+      } else {
+        setExist(false);
+        alert("user does not exist");
+      }
+    } catch (err: any) {
+      setExist(false);
+      alert(err.response?.data?.message || "Signup failed");
+    }
+  };
+  console.log(email);
   return (
     <div className="w-full">
       <Navbar />
@@ -41,7 +60,10 @@ export default function page() {
             </h2>
 
             {/* FORM CARD */}
-            <form className="w-[420px] bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]">
+            <form
+              className="w-[420px] bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
+              onSubmit={handleSubmit}
+            >
               <button className="w-full border border-[#d1d5db] py-[11px] rounded-md flex items-center justify-center gap-2 text-[14px] font-medium hover:bg-gray-50">
                 <Image src={google} height={18} width={18} alt="google" />
                 Continue with Google
