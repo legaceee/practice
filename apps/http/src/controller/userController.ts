@@ -99,62 +99,59 @@ export const signup = async function (req: Request, res: Response) {
   }
 };
 
-export const signin = async function (req: Request, res: Response) {
-  try {
-    const { data, error } = parseInput(req.body);
-    if (error) {
-      return res.status(500).json({
-        message: error,
-      });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        email: data?.email,
-      },
-    });
-    if (!user) {
-      return res.status(201).json({
-        message: "please signup before trying to login",
-      });
-    }
-    const hashedPassword = await bcrypt.compare(data!.password, user.password);
-    if (!hashedPassword) {
-      return res.status(201).json({
-        message: "enter the correct password",
-      });
-    }
-    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
-      expiresIn: "15m",
-    });
-    const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET!,
-      {
-        expiresIn: "7d",
-      },
-    );
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        refreshToken,
-      },
-    });
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
-    res.status(200).json({
-      message: accessToken,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      message: "something went wrong",
-    });
+export const signin = asyncHandler(async function (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const { data, error } = parseInput(req.body);
+  if (error) {
+    // return res.status(500).json({
+    //   message: error,
+    // });
+    throw new AppError(error, 500);
   }
-};
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: data?.email,
+    },
+  });
+  if (!user) {
+    // return res.status(401).json({
+    //   message: "please signup before trying to login",
+    // });
+    throw new AppError("please signup befrore trying to login", 401);
+  }
+  const hashedPassword = await bcrypt.compare(data!.password, user.password);
+  if (!hashedPassword) {
+    // return res.status(401).json({
+    //   message: "enter the correct password",
+    // });
+    throw new AppError("enter the correct password", 401);
+  }
+  const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+    expiresIn: "15m",
+  });
+  const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+    expiresIn: "7d",
+  });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      refreshToken,
+    },
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  return res.status(200).json({
+    message: accessToken,
+  });
+  next();
+});
 
 export const changePass = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -206,11 +203,11 @@ export const userExists = asyncHandler(
       where: { email: user },
     });
     if (!account) {
-      return res.status(500).json({
+      return res.status(200).json({
         exists: false,
       });
     }
-    res.status(200).json({
+    return res.status(200).json({
       exists: true,
     });
     next();
