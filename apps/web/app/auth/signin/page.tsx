@@ -23,7 +23,7 @@ export default function Page() {
         alert("user does not exist");
       }
     } catch (err: any) {
-      setStep("password");
+      setStep("email");
       alert(err.response?.data?.message || "Signup failed");
     }
   };
@@ -148,7 +148,14 @@ export default function Page() {
                 >
                   <div className="font-medium text-center mb-5">
                     {`welcome back ${email} !`}
-                    <div className="font-medium underline text-center">
+                    <div
+                      className="font-medium underline text-center hover:cursor-pointer"
+                      onClick={() => {
+                        setEmail("");
+                        setPassword("");
+                        setStep("email");
+                      }}
+                    >
                       Not you?
                     </div>
                   </div>

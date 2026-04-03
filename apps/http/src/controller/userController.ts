@@ -197,7 +197,7 @@ export const userExists = asyncHandler(
     }
     const user = email.trim();
     if (!/^\S+@\S+\.\S+$/.test(user)) {
-      throw new AppError("enter valid email", 500);
+      throw new AppError("enter valid email", 400);
     }
     const account = await prisma.user.findUnique({
       where: { email: user },
@@ -210,6 +210,5 @@ export const userExists = asyncHandler(
     return res.status(200).json({
       exists: true,
     });
-    next();
   },
 );
