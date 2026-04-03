@@ -1,9 +1,13 @@
+"use client";
 import Image from "next/image";
 import img from "../../../public/signin_img.png";
 import google from "../../../public/google.svg";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
+import { useState } from "react";
 export default function page() {
+  const [email, setEmail] = useState("");
+
   return (
     <div className="w-full">
       <Navbar />
@@ -39,7 +43,7 @@ export default function page() {
             {/* FORM CARD */}
             <form className="w-[420px] bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]">
               <button className="w-full border border-[#d1d5db] py-[11px] rounded-md flex items-center justify-center gap-2 text-[14px] font-medium hover:bg-gray-50">
-                <Image src={img} height={18} width={18} alt="google" />
+                <Image src={google} height={18} width={18} alt="google" />
                 Continue with Google
               </button>
 
@@ -70,16 +74,27 @@ export default function page() {
               <input
                 className="w-full mt-1 border border-[#d1d5db] p-[10px] rounded-md focus:border-black outline-none"
                 placeholder="Email"
+                onChange={(e) => setEmail(e.target.value)}
               />
 
               {/* BUTTON */}
-              <button className="w-full mt-4 bg-[#e5e7eb] text-[#9ca3af] py-[12px] rounded-md font-medium cursor-not-allowed">
+              <button
+                className={`w-full mt-4 py-[12px] rounded-md font-medium transition
+    ${
+      email.length > 0
+        ? "bg-amber-400 text-white cursor-pointer hover:bg-amber-600"
+        : "bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
+    }`}
+                disabled={email.length === 0}
+              >
                 Continue
               </button>
 
               <p className="text-[13px] text-center mt-4 text-gray-600">
                 Don't have a Zapier account?{" "}
-                <span className="underline cursor-pointer">Sign Up</span>
+                <span className="underline cursor-pointer">
+                  <Link href={"/signup"}>Sign Up </Link>
+                </span>
               </p>
             </form>
           </div>

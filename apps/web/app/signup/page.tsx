@@ -84,9 +84,9 @@ export default function Page() {
   //     </div>
   //   );
   return (
-    <div className=" min-h-screen">
+    <div className=" w-full min-h-screen">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-6 py-20 grid grid-cols-2 gap-16 items-center">
+      <div className="max-w-280 mx-auto  py-[96px] grid grid-cols-2 gap-16 ">
         <div className="space-y-6">
           <h1 className="text-[56px] leading-16 font-semibold text-gray-900 tracking-tight">
             AI Automation starts and scales with Zapier
@@ -117,7 +117,7 @@ export default function Page() {
 
         {/* RIGHT FORM */}
         <form
-          className=" p-8 rounded-xl shadow-sm border border-gray-200 w-105 "
+          className=" p-8 rounded-md shadow-sm border border-gray-200 w-105 "
           onSubmit={handleSubmit}
         >
           <button className="w-full border border-gray-300 py-3 rounded-md flex items-center justify-center gap-2 font-medium">

@@ -1,4 +1,4 @@
-import Image, { type ImageProps } from "next/image";
+import Image from "next/image";
 import aside from "../public/aside1.png";
 import Navbar from "./components/Navbar";
 
@@ -28,6 +28,9 @@ export default function Home() {
           </div>
           <Image src={aside} alt="image" width={478} height={560} />
         </div>
+      </div>
+      <div className="font-extralight -mt-4 bg-white block w-fit px-4 mx-12">
+        Trusted by the world’s best companies
       </div>
     </div>
   );
