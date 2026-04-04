@@ -4,20 +4,25 @@ import img from "../../../public/signin_img.png";
 import google from "../../../public/google.svg";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signinUser, userExist } from "../../lib/auth";
+import { useRouter, useSearchParams } from "next/navigation";
 export default function Page() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "password">("email");
   const [password, setPassword] = useState("");
-  const handleSubmit = async (e: any) => {
+  const router = useRouter();
+  const params = useSearchParams();
+  const isEmailValid = email.length > 0;
+  const isPasswordValid = password.length > 0;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       const res = await userExist({ email: email });
       if (res.exists) {
         setStep("password");
-        alert("user exists");
+        router.push(`?email=${encodeURIComponent(email)}&step=password`);
       } else {
         setStep("email");
         alert("user does not exist");
@@ -30,7 +35,7 @@ export default function Page() {
   const handleChange = async (e: any) => {
     setPassword(e.target.value);
   };
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -43,27 +48,38 @@ export default function Page() {
       alert("wrong password ");
     }
   };
+  useEffect(() => {
+    const stepParam = params.get("step");
+    const emailParam = params.get("email");
 
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+
+    if (stepParam === "password") {
+      setStep("password");
+    }
+  }, [params]);
   return (
     <div className="w-full">
       <Navbar />
-      <div className="max-w-[1200px] mx-auto px-6 pt-12 pb-16">
+      <div className="max-w-300 mx-auto px-6 pt-12 pb-16">
         <div className="grid grid-cols-[620px_420px] justify-between items-start">
           {/* LEFT SIDE */}
           <div className="pt-14">
-            <div className="bg-[#f7f5f2] rounded-xl p-[40px]">
+            <div className="bg-[#f7f5f2] rounded-xl p-10">
               <Image src={img} width={150} height={110} alt="img" />
 
               <h2 className="mt-6 text-[26px] font-semibold text-[#111827]">
                 Automate across your teams
               </h2>
 
-              <p className="mt-4 text-[15px] text-[#4b5563] leading-[24px] max-w-[500px]">
+              <p className="mt-4 text-[15px] text-[#4b5563] leading-6 max-w-125">
                 Zapier Enterprise empowers everyone in your business to securely
                 automate their work in minutes, not months—no coding required.
               </p>
 
-              <button className="mt-6 border border-[#c7c7c7] px-5 py-[10px] rounded-md text-[14px] font-medium hover:bg-[#f0ede9]">
+              <button className="mt-6 border border-[#c7c7c7] px-5 py-2.5 rounded-md text-[14px] font-medium hover:bg-[#f0ede9]">
                 Explore Zapier Enterprise
               </button>
             </div>
@@ -79,31 +95,31 @@ export default function Page() {
               <>
                 {/* FORM CARD */}
                 <form
-                  className="w-[420px] bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
+                  className="w-105 bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
                   onSubmit={handleSubmit}
                 >
-                  <button className="w-full border border-[#d1d5db] py-[11px] rounded-md flex items-center justify-center gap-2 text-[14px] font-medium hover:bg-gray-50">
+                  <button className="w-full border border-[#d1d5db] py-2.75 rounded-md flex items-center justify-center gap-2 text-[14px] font-medium hover:bg-gray-50">
                     <Image src={google} height={18} width={18} alt="google" />
                     Continue with Google
                   </button>
 
-                  <button className="w-full border border-[#d1d5db] py-[11px] rounded-md mt-3 text-[14px] font-medium hover:bg-gray-50">
+                  <button className="w-full border border-[#d1d5db] py-2.75 rounded-md mt-3 text-[14px] font-medium hover:bg-gray-50">
                     Continue with Facebook
                   </button>
 
-                  <button className="w-full border border-[#d1d5db] py-[11px] rounded-md mt-3 text-[14px] font-medium hover:bg-gray-50">
+                  <button className="w-full border border-[#d1d5db] py-2.75 rounded-md mt-3 text-[14px] font-medium hover:bg-gray-50">
                     Continue with Microsoft
                   </button>
 
-                  <button className="w-full border border-[#d1d5db] py-[11px] rounded-md mt-3 text-[14px] font-medium hover:bg-gray-50">
+                  <button className="w-full border border-[#d1d5db] py-2.75 rounded-md mt-3 text-[14px] font-medium hover:bg-gray-50">
                     Continue with SSO
                   </button>
 
                   {/* DIVIDER */}
                   <div className="flex items-center my-6">
-                    <div className="flex-1 h-[1px] bg-[#e5e7eb]"></div>
+                    <div className="flex-1 h-px bg-[#e5e7eb]"></div>
                     <span className="px-3 text-[13px] text-gray-400">OR</span>
-                    <div className="flex-1 h-[1px] bg-[#e5e7eb]"></div>
+                    <div className="flex-1 h-px bg-[#e5e7eb]"></div>
                   </div>
 
                   {/* INPUT */}
@@ -112,14 +128,14 @@ export default function Page() {
                   </label>
 
                   <input
-                    className="w-full mt-1 border border-[#d1d5db] p-[10px] rounded-md focus:border-black outline-none"
+                    className="w-full mt-1 border border-[#d1d5db] p-2.5 rounded-md focus:border-black outline-none"
                     placeholder="Email"
                     onChange={(e) => setEmail(e.target.value)}
                   />
 
                   {/* BUTTON */}
                   <button
-                    className={`w-full mt-4 py-[12px] rounded-md font-medium transition
+                    className={`w-full mt-4 py-3 rounded-md font-medium transition
     ${
       email.length > 0
         ? "bg-amber-400 text-white cursor-pointer hover:bg-amber-600"
@@ -143,7 +159,7 @@ export default function Page() {
               <>
                 {" "}
                 <form
-                  className="w-[420px] bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
+                  className="w-105 bg-white p-8 rounded-xl border border-[#e5e7eb] shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
                   onSubmit={handleLogin}
                 >
                   <div className="font-medium text-center mb-5">
@@ -154,6 +170,7 @@ export default function Page() {
                         setEmail("");
                         setPassword("");
                         setStep("email");
+                        router.replace("?");
                       }}
                     >
                       Not you?
@@ -169,7 +186,7 @@ export default function Page() {
 
                   <input
                     name="password"
-                    className="w-full mt-1 border border-[#d1d5db] p-[10px] rounded-md focus:border-black outline-none"
+                    className="w-full mt-1 border border-[#d1d5db] p-2.5 rounded-md focus:border-black outline-none"
                     placeholder="password"
                     type="password"
                     onChange={handleChange}
@@ -177,13 +194,13 @@ export default function Page() {
 
                   {/* BUTTON */}
                   <button
-                    className={`w-full mt-4 py-[12px] rounded-md font-medium transition
+                    className={`w-full mt-4 py-3 rounded-md font-medium transition
     ${
-      email.length > 0
+      password.length > 0
         ? "bg-amber-400 text-white cursor-pointer hover:bg-amber-600"
         : "bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
     }`}
-                    disabled={email.length === 0}
+                    disabled={password.length === 0}
                   >
                     Continue
                   </button>
