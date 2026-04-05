@@ -82,6 +82,12 @@ export const signup = async function (req: Request, res: Response) {
         refreshToken,
       },
     });
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+    });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -150,7 +156,6 @@ export const signin = asyncHandler(async function (
   return res.status(200).json({
     message: accessToken,
   });
-  next();
 });
 
 export const changePass = asyncHandler(
@@ -231,3 +236,24 @@ export const whoAmI = asyncHandler(
     return res.status(200).json(user);
   },
 );
+
+export const refresh = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
+    throw new AppError("unauthorised", 401);
+  }
+  const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!);
+  const newAccessToken = jwt.sign(
+    { userId: decoded.userId },
+    process.env.JWT_SECRET!,
+    { expiresIn: "15m" },
+  );
+
+  res.cookie("accessToken", newAccessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+  });
+
+  return res.sendStatus(200);
+});
