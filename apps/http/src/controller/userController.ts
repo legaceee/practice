@@ -212,3 +212,22 @@ export const userExists = asyncHandler(
     });
   },
 );
+
+export const whoAmI = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const userId = Number(req.userId);
+    if (!userId) {
+      throw new AppError("unauthorized", 401);
+    }
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
+    return res.status(200).json(user);
+  },
+);

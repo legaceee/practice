@@ -45,7 +45,7 @@ export default function Page() {
         alert("sign in succesfull");
       }
     } catch (err: any) {
-      alert("wrong password ");
+      alert(err);
     }
   };
   useEffect(() => {
@@ -193,17 +193,19 @@ export default function Page() {
                   />
 
                   {/* BUTTON */}
-                  <button
-                    className={`w-full mt-4 py-3 rounded-md font-medium transition
+                  <Link href={"/dashboard"}>
+                    <button
+                      className={`w-full mt-4 py-3 rounded-md font-medium transition
     ${
       password.length > 0
         ? "bg-amber-400 text-white cursor-pointer hover:bg-amber-600"
         : "bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
     }`}
-                    disabled={password.length === 0}
-                  >
-                    Continue
-                  </button>
+                      disabled={password.length === 0}
+                    >
+                      Continue
+                    </button>
+                  </Link>
                   <p className="text-[13px] text-center mt-4 text-gray-600">
                     Forgot password?
                   </p>
