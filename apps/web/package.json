@@ -13,7 +13,9 @@
   "dependencies": {
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.2.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.14.0",
+    "jsonwebtoken": "^9.0.3",
     "next": "16.1.5",
     "postcss": "^8.5.8",
     "react": "^19.2.0",
