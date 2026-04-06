@@ -59,7 +59,7 @@ export const signup = async function (req: Request, res: Response) {
         message: "user already exists ",
       });
     }
-    // const hashedPassword = jwt.sign(password, process.env.JWT_SECRET!);
+
     const hashedPassword = await bcrypt.hash(data!.password, 12);
 
     const user = await prisma.user.create({
@@ -242,7 +242,18 @@ export const refresh = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!refreshToken) {
     throw new AppError("unauthorised", 401);
   }
+  const user = await prisma.user.findFirst({
+    where: { refreshToken },
+  });
+
+  if (!user) {
+    throw new AppError("Invalid refresh token", 401);
+  }
   const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!);
+  if (typeof decoded === "string" || !("userId" in decoded)) {
+    throw new AppError("Invalid token", 401);
+  }
+
   const newAccessToken = jwt.sign(
     { userId: decoded.userId },
     process.env.JWT_SECRET!,

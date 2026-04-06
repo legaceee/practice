@@ -5,8 +5,8 @@ import google from "../../../public/google.svg";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import { useEffect, useState } from "react";
-import { signinUser, userExist } from "../../lib/auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { getMe, signinUser, userExist } from "../../lib/auth";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 export default function Page() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "password">("email");
@@ -42,7 +42,7 @@ export default function Page() {
       const res = await signinUser({ email, password });
       if (res) {
         console.log(res);
-        alert("sign in succesfull");
+        router.push("/dashboard");
       }
     } catch (err: any) {
       alert(err);
@@ -60,6 +60,16 @@ export default function Page() {
       setStep("password");
     }
   }, [params]);
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getMe();
+      if (user) {
+        router.push("/dashboard");
+      }
+    };
+
+    checkAuth();
+  }, []);
   return (
     <div className="w-full">
       <Navbar />
@@ -128,6 +138,7 @@ export default function Page() {
                   </label>
 
                   <input
+                    value={email}
                     className="w-full mt-1 border border-[#d1d5db] p-2.5 rounded-md focus:border-black outline-none"
                     placeholder="Email"
                     onChange={(e) => setEmail(e.target.value)}
@@ -186,6 +197,7 @@ export default function Page() {
 
                   <input
                     name="password"
+                    value={password}
                     className="w-full mt-1 border border-[#d1d5db] p-2.5 rounded-md focus:border-black outline-none"
                     placeholder="password"
                     type="password"
@@ -193,19 +205,19 @@ export default function Page() {
                   />
 
                   {/* BUTTON */}
-                  <Link href={"/dashboard"}>
-                    <button
-                      className={`w-full mt-4 py-3 rounded-md font-medium transition
+
+                  <button
+                    className={`w-full mt-4 py-3 rounded-md font-medium transition
     ${
       password.length > 0
         ? "bg-amber-400 text-white cursor-pointer hover:bg-amber-600"
         : "bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed"
     }`}
-                      disabled={password.length === 0}
-                    >
-                      Continue
-                    </button>
-                  </Link>
+                    disabled={password.length === 0}
+                  >
+                    Continue
+                  </button>
+
                   <p className="text-[13px] text-center mt-4 text-gray-600">
                     Forgot password?
                   </p>
