@@ -30,11 +30,10 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-5">
-        <Link href={"/auth/signin"}>
-          <p className="text-gray-600 cursor-pointer hover:text-black hover:bg-gray-200 p-2  hover:rounded-xs">
-            Explore apps
-          </p>
-        </Link>
+        <p className="text-gray-600 cursor-pointer hover:text-black hover:bg-gray-200 p-2  hover:rounded-xs">
+          Explore apps
+        </p>
+
         <p className="text-gray-600 cursor-pointer hover:text-black hover:bg-gray-200 p-2  hover:rounded-xs">
           Contact sales
         </p>

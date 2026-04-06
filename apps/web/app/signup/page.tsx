@@ -29,7 +29,7 @@ export default function Page() {
       alert(err.response?.data?.message || "Signup failed");
     }
   };
-  console.log(form);
+
   //   return (
   //     <div className="min-h-screen w-full">
   //       <Navbar />

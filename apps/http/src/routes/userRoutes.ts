@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changePass,
+  refresh,
   signin,
   signup,
   userExists,
@@ -13,4 +14,5 @@ user.post("/signin", signin);
 user.post("/me", userExists);
 user.get("/details", authMiddleware, whoAmI);
 user.post("/resetPassword", authMiddleware, changePass);
+user.post("/refresh", refresh);
 export { user };
