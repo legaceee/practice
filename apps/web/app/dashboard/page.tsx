@@ -19,8 +19,9 @@ export default async function page() {
   await res.json();
 
   return (
-    <div className="w-full h-full bg-gray-50">
+    <div className="grid grid-cols-[auto_1fr]">
       <Sidebar />
+      <main className="text-black">Content</main>
     </div>
   );
 }
