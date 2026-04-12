@@ -137,6 +137,7 @@ export default function Page() {
             placeholder="Work email"
             name="email"
             type="email"
+            onChange={handleChange}
           />
 
           <div className="flex flex-col mb-4">
@@ -151,6 +152,7 @@ export default function Page() {
               placeholder="password"
               type="password"
               name="password"
+              onChange={handleChange}
             />
           </div>
 

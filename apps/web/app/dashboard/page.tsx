@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import Sidebar from "../components/Sidebar";
+
 export default async function page() {
   const cookieStore = cookies();
 
@@ -14,15 +16,11 @@ export default async function page() {
     redirect("/auth/signin");
   }
 
-  const user = await res.json();
+  await res.json();
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Dashboard</h1>
-
-      <p>Welcome 👋</p>
-      <p>User ID: {user.id}</p>
-      <p>Email: {user.email}</p>
+    <div className="w-full h-full bg-gray-50">
+      <Sidebar />
     </div>
   );
 }
