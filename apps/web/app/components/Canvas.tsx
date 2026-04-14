@@ -1,6 +1,6 @@
 "use client";
 import ReactFlow, { useNodesState, useEdgesState, addEdge } from "reactflow";
-
+import "reactflow/dist/style.css";
 export default function CanvasPage() {
   const initialNodes = [
     {
@@ -37,14 +37,38 @@ export default function CanvasPage() {
     };
     setNodes((nds) => [...nds, newNode]);
   };
+  const onPaneClick = (event) => {
+    const bounds = event.target.getBoundingClientRect();
+
+    const position = {
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    };
+
+    const newNode = {
+      id: String(nodes.length + 1),
+      position,
+      data: { label: `Node ${nodes.length + 1}` },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+  };
   return (
-    <div className="h-screen w-full">
+    <div className="h-screen w-full relative">
+      <button
+        onClick={addNode}
+        className="absolute top-4 left-4 z-10 bg-blue-500 text-white px-4 py-2 rounded shadow"
+      >
+        + Add Node
+      </button>
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onPaneClick={onPaneClick}
       />
     </div>
   );

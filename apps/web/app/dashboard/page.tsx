@@ -25,7 +25,7 @@ export default async function page() {
       <Sidebar />
       <main className="text-black h-[110dvh] overflow-y-auto">
         <div>
-          <Canvass />
+          <CanvasPage />
         </div>
       </main>
     </div>
