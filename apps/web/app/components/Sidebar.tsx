@@ -1,10 +1,35 @@
 "use client";
-import { Calendar, Clock, History, Home, Settings, Zap } from "lucide-react";
-import { useState } from "react";
+import { Calendar, History, Home, Settings, Zap } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Sidebar() {
-  const [active, setActive] = useState("Home");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // const [active, setActive] = useState("Home");
+  // const hasHydratedFromRef: { current: boolean } = useRef(false);
 
+  // useEffect(() => {
+  //   if (!hasHydratedFromRef) {
+  //     const act = searchParams.get("active") || "home";
+  //     setActive(act);
+  //     hasHydratedFromRef.current = true;
+  //   }
+  // }, [router, searchParams]);
+
+  // useEffect(() => {
+  //   if (hasHydratedFromRef) {
+  //     const params = new URLSearchParams();
+  //     params.set("active", active);
+  //     router.replace(`/?${params.toString()}`);
+  //   }
+  // }, [router, searchParams]);
+  const active = searchParams.get("active") || "Home";
+
+  const handleClick = (name: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("active", name);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
   const items = [
     { name: "Home", icon: <Home size={18} /> },
     { name: "Zaps", icon: <Zap size={18} /> },
@@ -21,7 +46,7 @@ export default function Sidebar() {
           {items.map((ele, index) => (
             <li
               key={index}
-              onClick={() => setActive(ele.name)}
+              onClick={() => handleClick(ele.name)}
               className="relative group/item"
             >
               {/* ACTIVE INDICATOR */}

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { signinUser } from "../lib/auth";
 import Navbar from "../components/Navbar";
 
-export default function page() {
+export default function Page() {
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -25,44 +25,6 @@ export default function page() {
       alert(err.response?.data?.message || "Signin failed");
     }
   };
-
-  /*
-  return (
-    <div className="w-full">
-      <Navbar />
-      <div className="max-w-3xl m-auto p-4 flex items-center justify-center border">
-        <form className="flex flex-col gap-3  m-auto" onSubmit={handleSubmit}>
-          <div className="flex flex-col">
-            <h3>email</h3>
-            <input
-              className="p-4 border"
-              placeholder="enter your email"
-              name="email"
-              type="email"
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <h3>password</h3>
-            <input
-              className="p-4 border"
-              placeholder="enter your password"
-              name="password"
-              type="password"
-              onChange={handleChange}
-            />
-          </div>
-          <div className="max-w-2xs  m-auto">
-            <button className="bg-amber-400 p-4 rounded-2xl">Signin</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-  */
-
-  //
-
   return (
     <div className="min-h-screen w-full">
       <Navbar />

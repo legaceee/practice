@@ -23,7 +23,7 @@ API.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await refreshAPI.post("/auth/refresh"); // ✅ separate instance
+        await refreshAPI.post("/auth/refresh"); //  separate instance
         return API(originalRequest); // retry original request
       } catch (refreshError) {
         window.location.href = "/signin";

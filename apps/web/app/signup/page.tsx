@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signupUser } from "../lib/auth";
-import Image, { type ImageProps } from "next/image";
+import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import google from "../../public/google.svg";
