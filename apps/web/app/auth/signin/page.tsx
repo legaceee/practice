@@ -64,7 +64,7 @@ export default function Page() {
     const checkAuth = async () => {
       const user = await getMe();
       if (user) {
-        router.push("/dashboard");
+        router.push("/dashboard?active=History");
       }
     };
 

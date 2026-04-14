@@ -21,6 +21,8 @@
     "postcss": "^8.5.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-flow": "^1.0.3",
+    "reactflow": "^11.11.4",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {

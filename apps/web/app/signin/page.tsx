@@ -19,7 +19,7 @@ export default function Page() {
     try {
       const res = await signinUser(form);
       console.log(res);
-      alert("Signin successful 🚀");
+      alert("Signin successful ");
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.message || "Signin failed");

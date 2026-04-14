@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Sidebar from "../components/Sidebar";
+import CanvasPage from "../components/Canvas";
+import Canvass from "../components/Canvass";
 
 export default async function page() {
   const cookieStore = cookies();
@@ -19,9 +21,13 @@ export default async function page() {
   await res.json();
 
   return (
-    <div className="grid grid-cols-[auto_1fr]">
+    <div className="grid grid-cols-[auto_1fr] overflow-hidden h-screen ">
       <Sidebar />
-      <main className="text-black">Content</main>
+      <main className="text-black h-[110dvh] overflow-y-auto">
+        <div>
+          <Canvass />
+        </div>
+      </main>
     </div>
   );
 }
