@@ -14,7 +14,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="group h-screen bg-[#2f2a28] text-white w-14 hover:w-56 transition-all duration-300 ease-in-out">
+    <aside className="group h-screen bg-[#2f2a28] text-white w-14  transition-all duration-300 ease-in-out">
       <div className="flex flex-col h-full justify-between py-3">
         {/* TOP MENU */}
         <ul className="flex flex-col gap-1 px-2">
@@ -43,9 +43,9 @@ export default function Sidebar() {
                 </div>
 
                 {/* TEXT (SLIDE + FADE) */}
-                <span className="opacity-0 translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
+                {/* <span className="opacity-0 translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
                   {ele.name}
-                </span>
+                </span> */}
               </div>
 
               {/* TOOLTIP (ONLY WHEN COLLAPSED) */}

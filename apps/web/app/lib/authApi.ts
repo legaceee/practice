@@ -1,24 +1,31 @@
 import axios from "axios";
+
 export const API = axios.create({
   baseURL: "http://localhost:3001",
   withCredentials: true,
 });
+
+const refreshAPI = axios.create({
+  baseURL: "http://localhost:3001",
+  withCredentials: true,
+});
+
 API.interceptors.response.use(
   (res) => res,
   async (err) => {
     const originalRequest = err.config;
 
-    if (err.response?.status === 401 && !originalRequest._retry) {
+    if (
+      err.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh")
+    ) {
       originalRequest._retry = true;
 
       try {
-        // call refresh route
-        await API.post("/auth/refresh");
-
-        //  retry original request
-        return API(originalRequest);
+        await refreshAPI.post("/auth/refresh"); // ✅ separate instance
+        return API(originalRequest); // retry original request
       } catch (refreshError) {
-        //  refresh failed → logout
         window.location.href = "/signin";
       }
     }
