@@ -26,7 +26,7 @@ API.interceptors.response.use(
         await refreshAPI.post("/auth/refresh"); //  separate instance
         return API(originalRequest); // retry original request
       } catch (refreshError) {
-        window.location.href = "/signin";
+        window.location.href = "/auth/signin";
       }
     }
 

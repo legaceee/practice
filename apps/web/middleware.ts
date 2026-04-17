@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/signin", "/signup"];
+const PUBLIC_ROUTES = ["/auth/signin", "/signup"];
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("refreshToken")?.value;
@@ -14,12 +14,12 @@ export function middleware(req: NextRequest) {
 
   //  Not logged in → block protected routes
   if (!token && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/signin", req.url));
+    return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/signin", "/signup"],
+  matcher: ["/dashboard/:path*", "/auth/signin", "/signup"],
 };

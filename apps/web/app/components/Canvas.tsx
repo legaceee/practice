@@ -1,75 +1,116 @@
 "use client";
-import ReactFlow, { useNodesState, useEdgesState, addEdge } from "reactflow";
+
+import { useCallback, useEffect, useMemo } from "react";
+import ReactFlow, {
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  Background,
+  Controls,
+} from "reactflow";
 import "reactflow/dist/style.css";
+import CustomNode from "./CustomNode";
+
 export default function CanvasPage() {
+  //
   const initialNodes = [
     {
       id: "1",
-      position: { x: 100, y: 100 },
-      data: { label: "Start Node" },
-      type: "default",
-    },
-    {
-      id: "2",
-      position: { x: 300, y: 200 },
-      data: { label: "Action Node" },
-      type: "default",
+      type: "custom",
+      position: { x: 250, y: 100 },
+      data: { label: "Start" },
     },
   ];
 
-  const initialEdges = [
-    {
-      id: "e1-2",
-      source: "1",
-      target: "2",
-    },
-  ];
+  const initialEdges = [];
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
-  const addNode = () => {
-    const newNode = {
-      id: String(nodes.length + 1),
-      position: { x: 200, y: 200 },
-      data: { label: "New Node" },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
-  const onPaneClick = (event) => {
-    const bounds = event.target.getBoundingClientRect();
+  // ✅ ADD NODE FUNCTION
+  const onAddNode = useCallback(
+    (parentId) => {
+      setNodes((nds) => {
+        const parent = nds.find((n) => n.id === parentId);
+        if (!parent) return nds;
 
-    const position = {
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
-    };
+        const children = nds.filter((n) => n.parentId === parentId);
 
-    const newNode = {
-      id: String(nodes.length + 1),
-      position,
-      data: { label: `Node ${nodes.length + 1}` },
-    };
+        const index = children.length; // how many branches already
 
-    setNodes((nds) => [...nds, newNode]);
-  };
+        const spacing = 200;
+
+        const newId = crypto.randomUUID();
+
+        const newNode = {
+          id: newId,
+          type: "custom",
+          position: {
+            x: parent.position.x + (index - 0.5) * spacing,
+            y: parent.position.y + 150,
+          },
+          data: { label: "New Step" },
+          parentId: parentId, // 🔥 important
+        };
+
+        setEdges((eds) => [
+          ...eds,
+          {
+            id: `e-${parentId}-${newId}`,
+            source: parentId,
+            target: newId,
+          },
+        ]);
+
+        return [...nds, newNode];
+      });
+    },
+    [setNodes, setEdges],
+  );
+
+  // ✅ Inject function into all nodes
+  // useEffect(() => {
+  //   setNodes((nds) =>
+  //     nds.map((n) => ({
+  //       ...n,
+  //       data: {
+  //         ...n.data,
+  //         onAddNode,
+  //       },
+  //     })),
+  //   );
+  // }, [onAddNode, setNodes]);
+
+  // ✅ CONNECT HANDLER (optional drag connect)
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges],
+  );
+
+  // ✅ CUSTOM NODE TYPES
+  const nodeTypes = useMemo(
+    () => ({
+      custom: (props) => <CustomNode {...props} onAddNode={onAddNode} />,
+    }),
+    [onAddNode],
+  );
   return (
-    <div className="h-screen w-full relative">
-      <button
-        onClick={addNode}
-        className="absolute top-4 left-4 z-10 bg-blue-500 text-white px-4 py-2 rounded shadow"
-      >
-        + Add Node
-      </button>
-
+    <div className="h-screen w-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onPaneClick={onPaneClick}
-      />
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        panOnDrag={true}
+      >
+        <Background />
+        <Controls />
+      </ReactFlow>
     </div>
   );
 }

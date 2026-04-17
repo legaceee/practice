@@ -4,9 +4,10 @@ import img from "../../../public/signin_img.png";
 import google from "../../../public/google.svg";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getMe, signinUser, userExist } from "../../lib/auth";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { refresh } from "next/cache";
 export default function Page() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "password">("email");
@@ -14,7 +15,8 @@ export default function Page() {
   const router = useRouter();
   const params = useSearchParams();
   const isEmailValid = email.length > 0;
-  const isPasswordValid = password.length > 0;
+  const isPasswordValid = password.length > 8;
+  const refreshed = useRef(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -60,16 +62,19 @@ export default function Page() {
       setStep("password");
     }
   }, [params]);
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getMe();
-      if (user) {
-        router.push("/dashboard?active=History");
-      }
-    };
+  // useEffect(() => {
+  //   if (refreshed.current) return;
+  //   const checkAuth = async () => {
+  //     const user = await getMe();
 
-    checkAuth();
-  }, []);
+  //     if (user) {
+  //       router.push("/dashboard?active=History");
+  //     }
+  //   };
+
+  //   checkAuth();
+  //   refreshed.current = true;
+  // }, []);
   return (
     <div className="w-full">
       <Navbar />

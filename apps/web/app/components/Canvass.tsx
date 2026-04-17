@@ -36,18 +36,10 @@
 //       const viewportWidth = window.innerWidth;
 //       const viewportHeight = window.innerHeight;
 
-//       // 🔥 limits
 //       const minX = viewportWidth - scaledWidth;
 //       const minY = viewportHeight - scaledHeight;
 
-//       const maxX = 0;
-//       const maxY = 0;
-
-//       return {
-//         ...prev,
-//         x: clamp(newX, minX, maxX),
-//         y: clamp(newY, minY, maxY),
-//       };
+//       return { ...prev, x: minX, y: minY };
 //     });
 
 //     last.current = { x: e.clientX, y: e.clientY };
@@ -70,7 +62,7 @@
 //   };
 //   return (
 //     <div
-//       className="w-screen h-screen bg-gray-100 overflow-hidden"
+//       className="w-full h-full bg-gray-100 overflow-hidden"
 //       onMouseMove={onMouseMove}
 //       onMouseUp={onMouseUp}
 //       onMouseLeave={onMouseUp}
@@ -87,7 +79,7 @@
 //             transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
 //             transformOrigin: "0 0",
 //           }}
-//           className="w-[2000px] h-[2000px] bg-white relative"
+//           className="w-[200000px] h-[2000000px] bg-white relative overflow-hidden"
 //         >
 //           {nodes.map((node) => (
 //             <div
@@ -105,3 +97,86 @@
 //     </div>
 //   );
 // }
+"use client";
+import { useState, useRef } from "react";
+
+export default function Canvas() {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const [nodes, setNodes] = useState([{ id: 1, x: 0, y: 0, label: "Start" }]);
+
+  const dragging = useRef(false);
+  const last = useRef({ x: 0, y: 0 });
+
+  const onMouseDown = (e) => {
+    dragging.current = true;
+    last.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const onMouseMove = (e) => {
+    if (!dragging.current) return;
+
+    const dx = e.clientX - last.current.x;
+    const dy = e.clientY - last.current.y;
+
+    setOffset((prev) => ({
+      x: prev.x + dx,
+      y: prev.y + dy,
+    }));
+
+    last.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const stop = () => (dragging.current = false);
+
+  return (
+    <div
+      className="w-screen h-screen overflow-hidden bg-gray-100"
+      onMouseMove={onMouseMove}
+      onMouseUp={stop}
+      onMouseLeave={stop}
+    >
+      {/* GRID */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transform: `translate(${offset.x}px, ${offset.y}px)`,
+          backgroundImage: `
+            linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+            linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)
+          `,
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* NODES */}
+      {nodes.map((node) => (
+        <div
+          key={node.id}
+          style={{
+            position: "absolute",
+            left: node.x + offset.x,
+            top: node.y + offset.y,
+            padding: "12px 20px",
+            background: "white",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+          }}
+        >
+          {node.label}
+        </div>
+      ))}
+
+      {/* PAN LAYER */}
+      <div
+        onMouseDown={onMouseDown}
+        style={{
+          position: "absolute",
+          inset: 0,
+          cursor: "grab",
+        }}
+      />
+    </div>
+  );
+}
