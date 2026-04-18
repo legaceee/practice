@@ -13,10 +13,17 @@ import CustomNode from "./CustomNode";
 
 export default function CanvasPage() {
   //
+  // workflowId,
+  //         type: data.type,
+  //         service: data.service,
+  //         config: data.config,
+  //         order: data.order,
+
   const initialNodes = [
     {
       id: "1",
-      type: "custom",
+      type: "trigger",
+      service: "trigger",
       position: { x: 250, y: 100 },
       data: { label: "Start" },
     },
@@ -27,7 +34,7 @@ export default function CanvasPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // ✅ ADD NODE FUNCTION
+  //  ADD NODE FUNCTION
   const onAddNode = useCallback(
     (parentId) => {
       setNodes((nds) => {
@@ -68,7 +75,7 @@ export default function CanvasPage() {
     [setNodes, setEdges],
   );
 
-  // ✅ Inject function into all nodes
+  //  Inject function into all nodes
   // useEffect(() => {
   //   setNodes((nds) =>
   //     nds.map((n) => ({
@@ -81,13 +88,13 @@ export default function CanvasPage() {
   //   );
   // }, [onAddNode, setNodes]);
 
-  // ✅ CONNECT HANDLER (optional drag connect)
+  //  CONNECT HANDLER (optional drag connect)
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
 
-  // ✅ CUSTOM NODE TYPES
+  //  CUSTOM NODE TYPES
   const nodeTypes = useMemo(
     () => ({
       custom: (props) => <CustomNode {...props} onAddNode={onAddNode} />,

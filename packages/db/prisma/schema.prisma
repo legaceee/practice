@@ -32,6 +32,7 @@ model Workflow {
   nodes       Node[]
   user        User          @relation(fields: [userId], references: [id],onDelete: Cascade)
   workflowRun WorkflowRun[]
+  edges Edges[]
 }
 
 model Node {
@@ -41,7 +42,15 @@ model Node {
   service    Service
   config     Json
   order      Int
+  positionX Float?
+  positionY Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+
   workflow   Workflow @relation(fields: [workflowId], references: [id],onDelete: Cascade)
+ outgoingEdges Edges[] @relation("SourceNode")
+ incomingEdges Edges[] @relation("TargetNode")
+ @@index([workflowId])
 }
 
 
@@ -73,4 +82,17 @@ model ActionExecution {
   actionId      String
   status        String
   workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
+}
+
+model Edges {
+  id String @id @default(uuid())
+  workflowId Int
+  sourceNodeId Int
+  targetNodeId Int
+  label String?
+  createdAt DateTime @default(now())
+  workflow Workflow @relation(fields: [workflowId], references: [id])
+  sourceNode    Node @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNode    Node @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+
 }
