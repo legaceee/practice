@@ -16,6 +16,8 @@ type NodeCreateInput = {
   service: ServiceTypeValue;
   config: JsonInputValue;
   order: number;
+  positionX: number;
+  positionY: number;
 };
 
 type NodeUpdateInput = Partial<NodeCreateInput>;
@@ -173,6 +175,15 @@ function parseNodeCreateInput(body: unknown): {
   if (order === null) {
     return { error: `order must be an integer between 0 and ${MAX_ORDER}` };
   }
+  const positionX = Number(body.positionX);
+  if (!Number.isFinite(positionX)) {
+    return { error: "positionX must be a valid number" };
+  }
+
+  const positionY = Number(body.positionY);
+  if (!Number.isFinite(positionY)) {
+    return { error: "positionY must be a valid number" };
+  }
 
   return {
     data: {
@@ -180,6 +191,8 @@ function parseNodeCreateInput(body: unknown): {
       service,
       config,
       order,
+      positionX,
+      positionY,
     },
   };
 }
