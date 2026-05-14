@@ -6,7 +6,10 @@ import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import google from "../../public/google.svg";
+import { useRouter } from "next/navigation";
+
 export default function Page() {
+  const router = useRouter();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -23,7 +26,7 @@ export default function Page() {
     try {
       const res = await signupUser(form);
       console.log(res);
-      alert("Signup successful 🚀");
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       alert((err as any).response?.data?.message || "Signup failed");

@@ -15,7 +15,7 @@ import ReactFlow, {
   BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Plus, Settings2, Trash2 } from "lucide-react";
+import { Plus, Settings2, Trash2, Mail, Globe, X, Zap } from "lucide-react";
 
 // Custom Node for a Zapier-like feel
 import { Handle, Position, NodeProps } from "reactflow";
@@ -38,12 +38,20 @@ const ZapierNode = ({ data, isConnectable, id }: NodeProps) => {
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">{data.label}</h3>
-            <button 
-              className="text-gray-400 hover:text-red-500 transition-colors"
-              onClick={() => data.onDelete?.(id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500 mr-1">
+                {data.type || (id === "1" ? "TRIGGER" : "ACTION")}
+              </span>
+              <button 
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onDelete?.(id);
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
           <p className="text-sm text-gray-500 mt-1">
             {data.description || "Choose an event..."}
@@ -77,7 +85,8 @@ const initialNodes: Node[] = [
     data: { 
       label: "Trigger", 
       description: "When this happens...",
-      step: 1
+      step: 1,
+      type: "TRIGGER"
     },
   },
 ];
@@ -89,6 +98,7 @@ export default function WorkflowBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [stepCounter, setStepCounter] = useState(2);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } }, eds)),
@@ -140,7 +150,44 @@ export default function WorkflowBuilder() {
       };
       setEdges((eds) => [...eds, newEdge]);
     }
+    
+    // Automatically select the new node to configure it
+    setSelectedNodeId(newNodeId);
   }, [nodes, setNodes, setEdges, stepCounter, onDeleteNode]);
+
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    setSelectedNodeId(node.id);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
+  const updateNodeService = (service: "EMAIL" | "WEBHOOK") => {
+    if (!selectedNodeId) return;
+    
+    setNodes((nds) => nds.map((node) => {
+      if (node.id === selectedNodeId) {
+        const type = node.id === "1" ? "TRIGGER" : "ACTION";
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            type,
+            service,
+            label: service === "EMAIL" ? "Email" : "Webhook",
+            description: type === "TRIGGER" ? `When new ${service.toLowerCase()} arrives...` : `Send ${service.toLowerCase()}...`,
+            icon: service === "EMAIL" 
+              ? <Mail className="w-5 h-5 text-blue-600" /> 
+              : <Globe className="w-5 h-5 text-green-600" />
+          }
+        };
+      }
+      return node;
+    }));
+  };
+
+  const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
   return (
     <div className="w-full h-full relative flex flex-col bg-[#fcfcfc]" ref={reactFlowWrapper}>
@@ -158,13 +205,15 @@ export default function WorkflowBuilder() {
         </button>
       </div>
       
-      <div className="flex-1 w-full h-full">
+      <div className="flex-1 w-full h-full relative overflow-hidden flex">
         <ReactFlow
           nodes={nodesWithProps}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           fitView
           className="bg-gray-50/50"
@@ -180,10 +229,112 @@ export default function WorkflowBuilder() {
             maskColor="rgba(248, 250, 252, 0.7)"
             className="rounded-xl overflow-hidden shadow-md border-gray-100 bg-white" 
           />
-          <Panel position="top-right" className="bg-white/80 backdrop-blur-md p-3 rounded-xl shadow-sm border border-gray-100 text-xs font-medium text-gray-600">
+          <Panel position="top-right" className="bg-white/80 backdrop-blur-md p-3 rounded-xl shadow-sm border border-gray-100 text-xs font-medium text-gray-600 mr-2">
             Scroll to pan, pinch or scroll-wheel to zoom
           </Panel>
         </ReactFlow>
+
+        {/* Zapier-like Configuration Sidebar */}
+        <div 
+          className={`absolute top-0 right-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 transform transition-transform duration-300 ease-in-out z-20 ${
+            selectedNodeId ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          {selectedNode && (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                <div className="flex items-center gap-2 text-gray-800">
+                  <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
+                    {selectedNode.data.step}
+                  </div>
+                  <h2 className="font-semibold text-lg">
+                    {selectedNode.id === "1" ? "Configure Trigger" : "Configure Action"}
+                  </h2>
+                </div>
+                <button 
+                  onClick={() => setSelectedNodeId(null)}
+                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 flex-1 overflow-y-auto">
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">
+                    1. Choose app & event
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Select the service that will {selectedNode.id === "1" ? "start" : "perform an action in"} this workflow.
+                  </p>
+
+                  <div className="space-y-3">
+                    <div 
+                      onClick={() => updateNodeService("EMAIL")}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                        selectedNode.data.service === "EMAIL" 
+                          ? "border-indigo-500 bg-indigo-50/30" 
+                          : "border-gray-100 hover:border-indigo-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                        <Mail className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900">Email</div>
+                        <div className="text-xs text-gray-500">
+                          {selectedNode.id === "1" ? "Triggers when a new email is received" : "Sends an email"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div 
+                      onClick={() => updateNodeService("WEBHOOK")}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                        selectedNode.data.service === "WEBHOOK" 
+                          ? "border-indigo-500 bg-indigo-50/30" 
+                          : "border-gray-100 hover:border-indigo-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900">Webhook</div>
+                        <div className="text-xs text-gray-500">
+                          {selectedNode.id === "1" ? "Catch incoming webhooks" : "Send a POST request"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedNode.data.service && (
+                  <div className="mb-6 pt-6 border-t border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
+                      2. Configure {selectedNode.data.service === "EMAIL" ? "Email" : "Webhook"}
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-center">
+                       <Zap className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                       <p className="text-sm text-gray-600">
+                         Configuration options for <strong>{selectedNode.data.service}</strong> will appear here.
+                       </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+                <button 
+                  onClick={() => setSelectedNodeId(null)}
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
