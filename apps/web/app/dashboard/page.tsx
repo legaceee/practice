@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Sidebar from "../components/Sidebar";
-import CanvasPage from "../components/Canvas";
-import Canvass from "../components/Canvass";
-
+import WorkflowBuilder from "../components/WorkflowBuilder";
 export default async function page() {
   const cookieStore = cookies();
 
@@ -15,17 +13,17 @@ export default async function page() {
     },
   });
   if (!res.ok) {
-    redirect("/auth/signin");
+    redirect("/api/logout");
   }
 
   await res.json();
 
   return (
-    <div className="grid grid-cols-[auto_1fr] overflow-hidden h-screen ">
+    <div className="grid grid-cols-[auto_1fr] overflow-hidden h-screen bg-[#fcfcfc]">
       <Sidebar />
-      <main className="text-black h-[110dvh] overflow-y-auto">
-        <div>
-          <CanvasPage />
+      <main className="text-black h-screen overflow-hidden flex flex-col">
+        <div className="flex-1 w-full h-full relative">
+          <WorkflowBuilder />
         </div>
       </main>
     </div>

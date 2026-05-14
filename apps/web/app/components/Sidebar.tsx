@@ -39,7 +39,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="group h-screen  bg-[#2f2a28] text-white w-14  transition-all duration-300 ease-in-out">
+    <aside className=" group h-screen  bg-[#2f2a28] text-white w-14  transition-all duration-300 ease-in-out">
       <div className="flex flex-col h-full justify-between py-3">
         {/* TOP MENU */}
         <ul className="flex flex-col gap-1 px-2">

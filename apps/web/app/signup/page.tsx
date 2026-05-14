@@ -11,22 +11,22 @@ export default function Page() {
     email: "",
     password: "",
   });
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
   };
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       const res = await signupUser(form);
       console.log(res);
       alert("Signup successful 🚀");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Signup failed");
+      alert((err as any).response?.data?.message || "Signup failed");
     }
   };
 
@@ -157,7 +157,7 @@ export default function Page() {
           </div>
 
           <p className="text-xs text-gray-500 mb-4">
-            By signing up, you agree to Zapier's terms of service and privacy
+            By signing up, you agree to Zapier&apos;s terms of service and privacy
             policy.
           </p>
 

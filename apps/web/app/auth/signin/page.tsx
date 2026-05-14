@@ -4,11 +4,12 @@ import img from "../../../public/signin_img.png";
 import google from "../../../public/google.svg";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { getMe, signinUser, userExist } from "../../lib/auth";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { refresh } from "next/cache";
-export default function Page() {
+
+function SigninContent() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "password">("email");
   const [password, setPassword] = useState("");
@@ -240,5 +241,13 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SigninContent />
+    </Suspense>
   );
 }

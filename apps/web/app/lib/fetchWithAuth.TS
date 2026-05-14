@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
 export async function fetchWithAuth(url: string, options: any = {}) {
-  const cookieStore = cookies();
+  const cookieStore =await cookies();
 
   let res = await fetch(url, {
     ...options,
