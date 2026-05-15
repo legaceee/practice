@@ -1,28 +1,10 @@
 "use client";
-import { Calendar, History, Home, Settings, Zap } from "lucide-react";
+import { Calendar, History, Home, Settings, Zap, Plus, MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Sidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // const [active, setActive] = useState("Home");
-  // const hasHydratedFromRef: { current: boolean } = useRef(false);
-
-  // useEffect(() => {
-  //   if (!hasHydratedFromRef) {
-  //     const act = searchParams.get("active") || "home";
-  //     setActive(act);
-  //     hasHydratedFromRef.current = true;
-  //   }
-  // }, [router, searchParams]);
-
-  // useEffect(() => {
-  //   if (hasHydratedFromRef) {
-  //     const params = new URLSearchParams();
-  //     params.set("active", active);
-  //     router.replace(`/?${params.toString()}`);
-  //   }
-  // }, [router, searchParams]);
   const active = searchParams.get("active") || "Home";
 
   const handleClick = (name: string) => {
@@ -30,64 +12,97 @@ export default function Sidebar() {
     params.set("active", name);
     router.replace(`?${params.toString()}`, { scroll: false });
   };
+
   const items = [
-    { name: "Home", icon: <Home size={18} /> },
-    { name: "Zaps", icon: <Zap size={18} /> },
-    { name: "Calendar", icon: <Calendar size={18} /> },
-    { name: "History", icon: <History size={18} /> },
-    { name: "Settings", icon: <Settings size={18} /> },
+    { name: "Home", icon: <Home size={20} /> },
+    { name: "Zaps", icon: <Zap size={20} /> },
+    { name: "Calendar", icon: <Calendar size={20} /> },
+    { name: "History", icon: <History size={20} /> },
+    { name: "Settings", icon: <Settings size={20} /> },
   ];
 
   return (
-    <aside className=" group h-screen  bg-[#2f2a28] text-white w-14  transition-all duration-300 ease-in-out">
-      <div className="flex flex-col h-full justify-between py-3">
-        {/* TOP MENU */}
-        <ul className="flex flex-col gap-1 px-2">
-          {items.map((ele, index) => (
-            <li
-              key={index}
-              onClick={() => handleClick(ele.name)}
-              className="relative group/item"
-            >
-              {/* ACTIVE INDICATOR */}
-              {active === ele.name && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-400 rounded-r" />
-              )}
+    <div className="w-16 shrink-0 h-screen bg-[#2d2e2e]">
+      <aside className="fixed left-0 top-0 h-screen bg-[#2d2e2e] text-[#dcdcdc] w-16 hover:w-64 transition-all duration-300 ease-in-out z-50 overflow-hidden group shadow-[4px_0_24px_rgba(0,0,0,0.15)] border-r border-[#3f4040]">
+        <div className="flex flex-col h-full py-4">
+          {/* Logo */}
+          <div className="px-4 mb-6 flex items-center h-8 cursor-pointer" onClick={() => handleClick("Home")}>
+            <div className="min-w-[32px] w-[32px] h-[32px] rounded flex items-center justify-center bg-[#ff4f00] text-white font-bold text-xl">
+              _
+            </div>
+            <span className="ml-3 font-bold text-white text-xl tracking-tight whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Zapier
+            </span>
+          </div>
 
-              <div
-                className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all
-                ${
-                  active === ele.name
-                    ? "bg-white text-black"
-                    : "hover:bg-white/10"
-                }`}
-              >
-                {/* ICON */}
-                <div className="min-w-[18px] flex justify-center">
-                  {ele.icon}
-                </div>
-
-                {/* TEXT (SLIDE + FADE) */}
-                {/* <span className="opacity-0 translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
-                  {ele.name}
-                </span> */}
+          {/* Create Button */}
+          <div className="px-3 mb-6">
+            <button className="flex items-center w-full h-10 rounded-full bg-white text-black hover:bg-gray-200 transition-colors shadow-sm overflow-hidden">
+              <div className="min-w-[40px] flex items-center justify-center">
+                <Plus size={20} />
               </div>
+              <span className="font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Create
+              </span>
+            </button>
+          </div>
 
-              {/* TOOLTIP (ONLY WHEN COLLAPSED) */}
-              <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-black text-xs px-2 py-1 rounded opacity-0 group-hover/item:opacity-0 group-hover:opacity-0 group-hover/item:group-hover:opacity-100 pointer-events-none whitespace-nowrap">
-                {ele.name}
-              </div>
-            </li>
-          ))}
-        </ul>
+          {/* Nav Items */}
+          <ul className="flex flex-col gap-1 px-2 flex-1">
+            {items.map((ele, index) => {
+              const isActive = active === ele.name;
+              return (
+                <li
+                  key={index}
+                  onClick={() => handleClick(ele.name)}
+                  className="relative group/item"
+                >
+                  <div
+                    className={`flex items-center h-10 rounded-md cursor-pointer transition-colors
+                    ${isActive ? "bg-[#3f4040] text-white font-medium" : "hover:bg-[#3f4040] text-gray-300"}`}
+                  >
+                    {/* Active Line indicator */}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#ff4f00] rounded-r-full" />
+                    )}
 
-        {/* PROFILE */}
-        <div className="flex justify-center pb-3">
-          <div className="w-8 h-8 rounded-full bg-purple-400 flex items-center justify-center text-sm font-semibold">
-            ap
+                    <div className="min-w-[48px] flex items-center justify-center">
+                      {ele.icon}
+                    </div>
+                    
+                    <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {ele.name}
+                    </span>
+                  </div>
+
+                  {/* Tooltip when collapsed */}
+                  <div className="absolute left-[72px] top-1/2 -translate-y-1/2 bg-[#3f4040] text-white text-xs px-2.5 py-1.5 rounded shadow-lg opacity-0 group-hover/item:opacity-100 group-hover:hidden pointer-events-none whitespace-nowrap z-50 font-medium">
+                    {ele.name}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Bottom Profile */}
+          <div className="px-3 mt-auto">
+             <div className="flex items-center h-12 rounded-md hover:bg-[#3f4040] cursor-pointer transition-colors">
+               <div className="min-w-[40px] flex items-center justify-center">
+                 <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-sm font-semibold text-white shadow-sm border border-purple-500">
+                   AP
+                 </div>
+               </div>
+               <div className="ml-1 flex-1 flex flex-col whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                 <span className="text-sm font-medium text-white truncate">Ashish P.</span>
+                 <span className="text-xs text-gray-400 truncate">Free Plan</span>
+               </div>
+               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pr-2">
+                 <MoreHorizontal size={16} className="text-gray-400" />
+               </div>
+             </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }

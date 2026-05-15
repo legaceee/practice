@@ -175,11 +175,32 @@ export default function WorkflowBuilder() {
             ...node.data,
             type,
             service,
+            config: {},
             label: service === "EMAIL" ? "Email" : "Webhook",
             description: type === "TRIGGER" ? `When new ${service.toLowerCase()} arrives...` : `Send ${service.toLowerCase()}...`,
             icon: service === "EMAIL" 
               ? <Mail className="w-5 h-5 text-blue-600" /> 
               : <Globe className="w-5 h-5 text-green-600" />
+          }
+        };
+      }
+      return node;
+    }));
+  };
+
+  const updateNodeConfig = (key: string, value: string) => {
+    if (!selectedNodeId) return;
+    
+    setNodes((nds) => nds.map((node) => {
+      if (node.id === selectedNodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            config: {
+              ...(node.data.config || {}),
+              [key]: value
+            }
           }
         };
       }
@@ -314,12 +335,54 @@ export default function WorkflowBuilder() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
                       2. Configure {selectedNode.data.service === "EMAIL" ? "Email" : "Webhook"}
                     </h3>
-                    <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-center">
-                       <Zap className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-                       <p className="text-sm text-gray-600">
-                         Configuration options for <strong>{selectedNode.data.service}</strong> will appear here.
-                       </p>
-                    </div>
+                    {selectedNode.data.service === "EMAIL" && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                          <input 
+                            type="text" 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                            placeholder="recipient@example.com"
+                            value={selectedNode.data.config?.to || ""}
+                            onChange={(e) => updateNodeConfig("to", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                          <input 
+                            type="text" 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                            placeholder="Email Subject"
+                            value={selectedNode.data.config?.subject || ""}
+                            onChange={(e) => updateNodeConfig("subject", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Body</label>
+                          <textarea 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                            placeholder="Email Body"
+                            rows={4}
+                            value={selectedNode.data.config?.text || ""}
+                            onChange={(e) => updateNodeConfig("text", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {selectedNode.data.service === "WEBHOOK" && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+                          <input 
+                            type="text" 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                            placeholder="https://api.example.com/webhook"
+                            value={selectedNode.data.config?.url || ""}
+                            onChange={(e) => updateNodeConfig("url", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

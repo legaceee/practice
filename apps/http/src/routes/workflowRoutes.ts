@@ -11,7 +11,7 @@ const workflowRoutes: any = Router();
 
 workflowRoutes.get("/workflow/:workflowId", authMiddleware, getWorkflow);
 workflowRoutes.post("/", authMiddleware, createWorkflow);
-workflowRoutes.delete("/delete/:workflowId", deleteWorkflow);
+workflowRoutes.delete("/delete/:workflowId",authMiddleware, deleteWorkflow);
 workflowRoutes.patch("/workflow/:workflowId", authMiddleware, updateWorkflow);
 
 export default workflowRoutes;
